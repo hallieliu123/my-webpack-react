@@ -1,0 +1,26 @@
+/* body{
+    background: url('../img/1.jpg');
+} */
+
+/* @font-face{  // 引入字体
+    font-family: myFront;
+    src: url('../fonts/fontawesome-webfont.ttf');
+}
+.bicycle{
+    font-family: myFront;
+    font-size: 50px;
+}
+.bicycle:before{
+    content: '\f206';
+} */
+
+.ot{
+    background:yellowgreen;
+}
+#hell{
+    background: bisque;
+}
+
+.test{
+    background: blueviolet;
+}

@@ -1,0 +1,295 @@
+webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
+
+// 1.配置 webpack 文件, webpack.config.js是在nodejs运行的,所以要使用commonjs的语法
+      webpack.config.js中entry和output配置,output要用绝对路径.
+      安装 webpack 3版本, 配置 package.json中scripts命令
+      安装 webpack 4版本, 配置mode，告诉是生产环境还是开发环境
+
+
+ 2.插件的使用，简单介绍 
+    plugins: [] 数组
+    html-webpack-plugin : 用来自动创建一个html文件，可自定义文件名称，模板(将模板内容插入新文件里面)
+    htmlWebpackPlugin({ filname:'index.html',template:'' });
+
+
+ 3.loader的使用，处理了不同的模块，比如css,js,jsx等，简单介绍
+    module:{
+      rules: [{
+           test: /\.js$/,        // 匹配这一类模块
+           use: [
+                    {
+                        loader: 'babel-loader',  // 依赖babel-core，可以处理jsx,es6等模块语法
+                        options: {
+                            presets: ['react']    // 告诉webpack使用babel-preset-react处理jxs语法
+                        }
+                    }
+                ], 
+        
+      }]
+    }
+ 4.使用 devSever，使我们的项目运行在服务器上，更方便调试，帮我们自动刷新浏览器. 它打包的文件并不会写入项目内，而是存在内存中。 
+      直接安装，在package.json中配置，启动
+      可在webpack配置文件里配置参数，如
+      devSever:{
+          port: 3000,  // 将监听端口改为 3000
+          open: true   // 便已打包完成自动打开浏览器
+      }
+ 
+ 5.打包 css 模块文件，先用 css-loader (也帮助自动引入了url()内的路径图片，但是处理图片是file-loader做的) 去打包css文件，再用 style-loader 去将打包的 css 用style标签插入 html 结构中
+    不使用模块化
+    module:{
+        rules:[
+            {
+                test:/\.css$/,
+                use:['style-loader','css-loader']
+            }
+        ]
+    }
+
+6. 打包 css 中出现的 图片 文件模块，使用 file-loader， 做了两件事，将图片重命名，将图片copy到定义的输出文件夹
+        也可以处理js文件内引入的图片，首先先引入图片，获得图片实际名称，然后放入src,如：import view from './img/1.jpg'; <img src={ view } />
+    module:{
+        rules:[
+            {
+                test:/(\.jpg)|(\.png)$/,
+                use:['file-loader']
+            }
+        ]
+    }
+
+7. url-loader 也是用来处理图片的，是file-loader的增强版。他能将图片转化为base64格式的字符串并且打包进入js文件，这样就减少了请求，并且能更快的加载图片。
+    但是如果图片又多又大就不好了，所以可以设置参数，当图片超过多少就不去编码了，交给file-loader去处理
+    module:{
+        rules:[
+            {
+                test: /\.(jpg)|(png)|(gif)|(jpeg)$/,
+                use:[{
+                    loader:'url-loader',
+                    options:{
+                        limit: 1000   
+                    }
+                }]
+            }
+        ]
+    }
+8. 引入字体，file-loader 也可以处理字体，1种方式是自己定义@font-face引入字体，2种是直接引入css文件，加类名使用
+    // 实际 file-loader 和 url-loader 都是可以处理的
+
+9. css 模块化
+    1使css模块化,js文件中直接引入模块，将类名或者说id全部重新编码放入一个对象中. 使用exclude可以定义不使用该loader处理的文件
+    module:{
+        rules:[
+            {
+                test:/\.css$/,
+                use:[
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options:{
+                            module: true 
+                        }
+                    }
+                ],
+                exclude:[   // 排除不使用该loader处理的文件
+                    path.resovle(__dirname,'node_modules');
+                    path.resolve(__dirname,'src');
+                ]
+            }
+        ]
+    }
+    2使用css模块化和不是使用css模块化一起，提供一部分去模块化，一部分不模块化的功能。
+    利用了，rules规则自后往前使用的特性(use实际也是这样的)
+    module:{
+        rules:[
+            {
+                test: /\.css$/,
+                use:[
+                    'style-loader',
+                    {
+                        loader:'css-loader',
+                        options:{
+                            module: true
+                        }
+                    }
+                ],
+                exclude:[ // 只排除
+                    path.resovle(__dirname,'node_modules');
+                    path.resolve(__dirname,'src');
+                ]
+            },
+            {
+                test: /\.css$/,
+                use:['style-loader','css-loader'],
+                inclulde:[  // 只包含
+                    path.resovle(__dirname,'node_modules');
+                    path.resolve(__dirname,'src');
+                ]
+            }
+        ]
+    }
+    3localIdentName属性：定义模块化后类名
+    module:{
+        rules:[
+            {
+                test:/\.css$/,
+                use:[
+                    'style-loader',
+                    {
+                        loader:'css-loader',
+                        options:{
+                            module:true,
+                            localIdentName:'[hash:base64:23]' // 默认值是base64位哈希值保留了23位，位数保留可以自定义
+                            // 也可以加： '[path]-[name]-[local]-[hash]', [path] 是相对webpack.config.js的路径
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+10. 使用 sass 或 less, 分别安装 sass-loader(依赖 node-sass)，less-loader(依赖less);两者使用方法及配置基本一致，下面只写sass的配置
+    模块化的使用与 css 一致
+    module:{
+        rules:[
+            {
+                test: /\.scss$/,
+                use:[
+                    'style-loader',
+                    {
+                        loader:'css-loader',
+                        options:{
+                            module: true,
+                            localIdentName: '[name]-[local]-[hash:base64:3]'
+                        }
+                    },
+                    'sass-loader'
+                ], 先用sass-loader去编译，编译完交给css-loader去处理，处理完让style-loader插入html
+                exclude:[
+                    path.resovle(__dirname,'node_modules');
+                    path.resolve(__dirname,'src');
+                ]
+            },
+            {
+                test: /\.scss$/,
+                use:['style-loader','css-loader','sass-loader'],
+                inclulde:[  // 只包含
+                    path.resovle(__dirname,'node_modules');
+                    path.resolve(__dirname,'src');
+                ]
+            }
+        ]
+    }
+11. 重新认识 babel,它是用来编译js代码的.
+    1presets预设针对一类进行编译(就是把一些相关的插件打包在一起)比如react，es6,es7,es8等最新的已被列入标准的js语法可以是用babel-preset-env来支持
+    2plugins插件针对某个功能语法进行编译
+    3使用options代替.babelrc文件
+    module:{
+        rules:[
+            {
+                test:/\.js$/,
+                use:[
+                    {
+                        loader:'babel-loader',
+                        options:{
+                            presets:['react','env']
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+12. 1js文件打包编译排除node_modules文件，node_modules文件开发者已处理好，不必再打包编译，会增加打包编译耗时
+    2抽出options，写入.babelrc文件
+
+
+13. 1输出文件路径处理,fonts,img,js, 
+        fonts,img 为它们的loader添加 options:{ name:'[path]-[name]-[hash:base64:3].[ext]' } ext表示后缀名，[]可随意指定
+        输出的js文件则在output中修改
+    2使用clean-webpack-plugin去清除文件路径,new cleanWebpackPlugin(['dist']); // 路径相对webpack.config.js
+    
+14. output中:publicPath 所有输出文件路径前面都会默认添加这个路径，publicPath值必须以‘/’结尾 ( 没测试出效果 )   
+    devServer中 publicPath为内存中webpack打包文件输出路径     
+    两者应保持一致      
+
+
+15. 多入口文件, 
+    entry:{ 
+        index: '', 
+        register: ''
+    }, 
+    出口设置 
+    output:{
+        filename: '[name]-[chunkhash:8].js', // chunkhash在文件不改变的情况下名称不变，能够在发布线上时，不变的文件继续使用缓存。与hash的区别在与hash每次打包一定改变
+        path: '绝对路径'
+    }
+
+16. 多次 new htmlWebpackPlugin({filename:'',template:'',chunks:['']}),则会多次生成 html 文件, chunks可以自己定义注入的 js 文件
+
+17. extract-text-webpack-plugin, 将css文件提取出一个单独的文件，并自动用link引入html模版; sass 文件和 less文件都可以用它去处理
+
+18. devtool: 'source-map' 开发中使用可帮助定位错误至哪个文件第几行，会自动生成.map文件(包括js,css文件)
+
+19. devServer:{   // 为devServer设置代理，解决跨域问题，这样就可以自己mock数据
+        proxy: {
+            'api/': 'http://localhost:8080'
+        }
+    }
+
+20. new webpack.HotModuleReplacementPlugin() 
+    不支持css模块化,如果使用extract-text-webpack-plugin必须设为disable:true，并且输出文件不能使用chunkhash
+    处理js模块要在入口
+    if(module.hot){
+        module.hot.accepts('./',function(){  // 第一个参数是引入的路径(注意是引入过的路径)，第二个参数是改变后要做的行为
+            
+        })
+    }
+
+21.new webpack.optimize.CommonsChunkPlug({name:'',filename:''}); 
+     注意点：单入口文件不会抽取公共模块，多入口文件默认超过模块被引入>=2次时会被抽取
+            可帮助抽取vendor模块 和 多入口文件中的公共模块
+
+
+22.new webpack.optimize.UglifyjsPlugin({ // 压缩 js 文件
+        compress:{
+            warnings: false, // 去除压缩时的一些警告(因为在压缩是webpack会查到一些无用的变量，所以会报警)
+            drop_debugger: true,
+            drop_console: true
+        }
+    })
+
+23.使用 webpack-merge 拆分 dev环境 和 prod 环境，通过 --env.[] 注入变量
+
+
+0.tree shaking 摇树,在webpack 4 中 开发环境配置文件设置,在webpack 3.12.0中没有尝试出来
+    webpack 4 中 代码分割使用splitChunks
+    optimization:{
+    usedExports: true,( 使用 tree shaking,在package.json文件中设置sideEffects:['','']哪些文件不使用tree shaking)
+    splitChunks: {
+        chunks:'all',( 支持异步，同步，异步或同步引入的模块 aysnc | initial | all )
+    }
+}
+
+0.(不懂原理)babel-pollyfil,babel-transform-runtime,babel-preset-env 区别
+
+    babel-pollyfill 与 babel-transform-runtime 的区别, 用来支持最新的es6,7,8语法的，但是现在
+    babel-pollyfill 完全解析es6语法，但打包体积大，并会污染全局对象，和内置全局对象（不适合用于开发工具库）
+    babel-transform-runtime 不支持内置对象的新方法，但可以按需引入，打包体积小
+    babel-preset-env 可按需引入，可配置性高
+
+0. ( v4版本才支持 ) mini-css-extract-plugin,new MiniCssExtractPlugin({filenam:'[name]-[chunkhash:8].css'})，将css压缩并抽取出来   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

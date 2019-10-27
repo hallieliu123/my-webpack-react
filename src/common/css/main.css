@@ -1,3 +1,5 @@
+*{margin:0; padding:0;}
+li{list-style: none;}
 /* body{
     background: url('../img/1.jpg');
 } */
@@ -23,4 +25,31 @@
 
 .test{
     background: blueviolet;
+}
+
+.container{
+    border-top: 1px solid rgb(226, 221, 221);
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    padding: 5px 0;
+    width: 100%;
+}
+a{
+    height: 50px;
+    text-align: center;
+    flex: 1;
+    font-size: 12px;
+}
+li{
+    height: 50px;
+    text-align: center;
+    flex: 1;
+    font-size: 12px;
+}
+img{
+    height:25px;
+}
+.active{
+    color: red;
 }

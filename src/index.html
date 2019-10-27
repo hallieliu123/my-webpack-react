@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id='app'></div>
+    <script src='./vnode.js'></script>
+    <script>
+       // 旧的 VNode
+        const prevVNode = createElement('div', null, [
+        createElement('p', { key: 'a' ,style:{color:'blue'}}, '节点1'),
+        createElement('p', { key: 'b' }, '节点2'),
+        createElement('p', { key: 'c' }, '节点3'),
+        createElement('p', { key: 'd'}, '节点4'),
+        ])
+
+        // 新的 VNode
+        const nextVNode = createElement('div', null, [
+        createElement('p', { key: 'd' }, '节点4'),
+        createElement('p', { key: 'a' ,style:{color:'red'}}, '节点1'),
+        createElement('p', { key: 'b' }, '节点2'),
+        createElement('p', { key: 'f' }, '节点6'),
+        createElement('p', { key: 'e' ,class:"item-header"}, '节点5'),
+        ])
+        render(prevVNode,document.getElementById('app'));
+        // console.log(nextVNode);
+        setTimeout(()=>{
+            render(nextVNode,document.getElementById('app'));
+        },2000);
+    </script>
+</body>
+</html>

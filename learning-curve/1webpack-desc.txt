@@ -35,7 +35,7 @@ webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
           open: true   // 便已打包完成自动打开浏览器
       }
  
- 5.打包 css 模块文件，先用 css-loader (也帮助自动引入了url()内的路径图片，但是处理图片是file-loader做的) 去打包css文件，再用 style-loader 去将打包的 css 用style标签插入 html 结构中
+ 5.打包 css 模块文件，先用 css-loader (也帮助自动引入了url()内的路径，但是处理图片是file-loader做的) 去打包css文件，再用 style-loader 去将打包的 css 用style标签插入 html 结构中
     不使用模块化
     module:{
         rules:[
@@ -229,6 +229,10 @@ webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
 18. devtool: 'source-map' 开发中使用可帮助定位错误至哪个文件第几行，会自动生成.map文件(包括js,css文件)
 
 19. devServer:{   // 为devServer设置代理，解决跨域问题，这样就可以自己mock数据
+        port:8080, // 设置端口号
+        open: false,  // 打包完成是否自动打开浏览器
+        contentBase:'文件绝对路径', // 如果从打包文件中查不到则去这个文件夹路径查找(可设置多个文件)，用来处理静态资源
+        historyApiFallback: true,// 解决使用 HTML5 history api出现的找不到资源的问题(可以设置为对象手动rewrites每个路径)
         proxy: {
             'api/': 'http://localhost:8080'
         }
@@ -243,7 +247,7 @@ webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
         })
     }
 
-21.new webpack.optimize.CommonsChunkPlug({name:'',filename:''}); 
+21.new webpack.optimize.CommonsChunkPlug({name:'',filename:''}); 低于webpack4使用它进行代码分割
      注意点：单入口文件不会抽取公共模块，多入口文件默认超过模块被引入>=2次时会被抽取
             可帮助抽取vendor模块 和 多入口文件中的公共模块
 
@@ -259,7 +263,7 @@ webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
 23.使用 webpack-merge 拆分 dev环境 和 prod 环境，通过 --env.[] 注入变量
 
 
-0.tree shaking 摇树,在webpack 4 中 开发环境配置文件设置,在webpack 3.12.0中没有尝试出来
+a.tree shaking 摇树,在webpack 4 中 开发环境配置文件设置,在webpack 3.12.0中没有尝试出来
     webpack 4 中 代码分割使用splitChunks
     optimization:{
     usedExports: true,( 使用 tree shaking,在package.json文件中设置sideEffects:['','']哪些文件不使用tree shaking)
@@ -268,14 +272,26 @@ webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
     }
 }
 
-0.(不懂原理)babel-pollyfil,babel-transform-runtime,babel-preset-env 区别
+b.(不懂原理)babel-pollyfil,babel-transform-runtime,babel-preset-env 区别
 
     babel-pollyfill 与 babel-transform-runtime 的区别, 用来支持最新的es6,7,8语法的，但是现在
     babel-pollyfill 完全解析es6语法，但打包体积大，并会污染全局对象，和内置全局对象（不适合用于开发工具库）
     babel-transform-runtime 不支持内置对象的新方法，但可以按需引入，打包体积小
     babel-preset-env 可按需引入，可配置性高
 
-0. ( v4版本才支持 ) mini-css-extract-plugin,new MiniCssExtractPlugin({filenam:'[name]-[chunkhash:8].css'})，将css压缩并抽取出来   
+
+c. ( v4版本才支持 ) mini-css-extract-plugin,new MiniCssExtractPlugin({filenam:'[name]-[chunkhash:8].css'})，将css压缩并抽取出来   
+
+
+d.webpack-dev-server || hmr 实现原理  
+
+
+    网页和webpack-dev-sever通过webSockets建立了一个连接，然后监听文件，发现变化，告诉页面调用reload接口刷新页面 或者是更新页面内容 
+
+
+e.对于webSockets: 查看课本
+
+
 
 
 

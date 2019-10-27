@@ -7,7 +7,7 @@ const prodConfig = require('./webpack.config.prod');
 const baseConfig = {
     entry: {
         main: './src/app.js',
-        a: './src/a.js',
+        // a: './src/a.js',
         vendor: ['react','react-dom']
     },
     output: {

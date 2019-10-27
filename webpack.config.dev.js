@@ -6,6 +6,8 @@ module.exports = {
         filename: 'assets/js/[name]-[hash:8].js',   // 使用chunkhash的话，hmr会报错
     },
     devServer:{
+        contentBase: path.join(__dirname, 'public'),
+        historyApiFallback: true,  
         port: 3000,
         open: true,
         hot:true,
@@ -29,14 +31,30 @@ module.exports = {
         rules:[
             {
                 test: /\.css/,
-                use: ['style-loader','css-loader'],
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            // module: true
+                        }
+                    }
+                ],
                 exclude:[
                     path.resolve(__dirname,'node_modules')
                 ]
             },
             {   
                 test: /\.css$/,
-                use: ['style-loader','css-loader'],
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            // module: true
+                        }
+                    }
+                ],
                 include:[  
                     path.resolve(__dirname,'node_modules')
                 ]

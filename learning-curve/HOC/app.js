@@ -1,12 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter,IndexRoute,Link,Route,Switch,Redirect} from 'react-router-dom';
-import Home from './Home';
-
+// import Home from './Home';
+import Home from './index';
+import Category from './category';
+import Cart from './cart';
+import User from './user';
 
 
 ReactDOM.render(
     <BrowserRouter>
+        <Route path='/category' component={ Category } /> 
+        <Route path='/cart' component={ Cart } /> 
+        <Route path='/user' component={ User } /> 
         <Route path='/' exact component={ Home } /> 
     </BrowserRouter>,
     document.getElementById('app')

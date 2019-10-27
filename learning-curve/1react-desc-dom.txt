@@ -1,0 +1,241 @@
+react
+1. 生命周期函数
+    v16版本之前的
+    初始化阶段：constructor()
+    挂载阶段：componentWillMount() -> render() -> componentDidMount()
+    更新阶段：
+        props导致的:  
+            componentWillReceiveProps(nextProps) -> shouldComponentUpdate(nextProps,nextState) -> componentWillUpdate(nextProps, nextState)
+            -> render() -> componentDidUpdate(prevProps,prevState)
+        自身state改变导致的更新:  
+            shouldComponentUpdate(nextProps,nextState) -> componentWillUpdate(nextProps, nextState) -> render() -> componentDidUpdate(prevProps,prevState)
+            shouldComponentUpdate使用这个方法可以减少组件不必要的更新，优化组件性能
+            (现在才知道自己以前写的代码有多烂了，中间有无数次的没用的组件更新)
+    卸载阶段：componentWillUnmout()  
+
+    v16.4之后的
+    增加了static getDerivedStateFromProps(nextProps, currentState)，每次组件被重新渲染前被调用,不管是内部setState还是父组件传入的props变化还是父组件的更新。
+        它必须返回一个object作为setState的updater来更新组件，或者返回null,什么都不更新
+    增加了getSnapshotBeforeUpdate(prevProps,prevState),(没想到使用场景)在组件更新(不是挂载的时候)render之后componentDidUpdate之前调用，可以读取但无法使用DOM的时候
+
+    取消了：componentWillMount，componentWillReceiveProps，componentWillUpdate   
+
+
+
+ 2. 组件复合,也叫做插槽
+    插槽this.props.children: 使用场景表述。 
+    牛逼的具名插槽: 使用场景表述。
+    不常用的作用域插槽: 能传参数控制显示的数据，很灵活。
+
+
+
+ 3. 高阶组件的使用
+    高阶函数的概念: 1.函数作为参数被传递  2.函数作为返回值被输出
+    高阶组件的概念: 1.高阶组件是一个接受组件作为参数,返回一个新组件的函数  2.高阶组件是一个函数，不是组件
+
+    代理方式的高阶组件: 返回的新组件继承React.Component,新组件的作用是代理被传入作为参数的组件,新组件在render函数中直接渲染被包裹组件;
+        应用： 操作props, 抽取状态, 操作ref, 包装组件
+    继承方式的高阶组件: 返回新组件继承被传入的参数组件
+        应用：操作props, 操作声明周期函数
+    修改高阶组件的显示名称
+
+    复制一个ReactElement(render返回的element)，修改或者说增加一个组件的属性，或者替换children( ??? to test )
+    React.cloneElement(ReactElement,{ 要添加或修改的属性 },ReactElement.props.children);
+    React.Children.map([],item=>{ });    
+     
+
+4. useState,
+   useEffect(用来处理有副作用的操作,比如异步操作,修改dom,setTimeout等...有些副作用是要清楚的，比如clearInterval(timerId).还有它的第二个参数是依赖，只要依赖有变化副作用操作就会执行),
+   useReducer 没有体会出它的好处，感觉useState使用起来已经很灵活了
+   useContext 很容易实现解耦,不必一层层传递参数,类似redux
+
+
+6. react 虚拟dom原理    
+    什么是虚拟dom ？
+        虚拟dom就是用js对象来描述真实的dom节点  
+    为什么要使用虚拟dom ？
+        因为真实的一个简单dom节点属性就有上百个,如果很多个层层嵌套,对真实dom的操作太消耗浏览器性能了
+    简单描述一下渲染过程
+      react中由jsx到新建虚拟dom的转义是工程化实现的，由React.createElement()去创建虚拟dom，由render函数去渲染虚拟dom.
+      对于虚拟dom的比较和重新更新,这部分比较复杂，由diff算法实现，分为很多种情况，拿一种情况来说，如果这个虚拟dom的tag类型就是html元素,首先先去对比更新真实dom的属性
+      然后对它的子元素进行对比，这里面老的虚拟dom有3种情况，新的虚拟dom也有3种情况，分别都要进行组合对比更新，也就是有9种情况，最为复杂的是新旧虚拟dom都是有多个子元素，
+      新的有老的没有的要新增，老的有的与新的不一样的要更新，新的有的老的没有的又要分为两种情况，一是要查看顺序，顺序有问题要调整顺序，顺序没问题不用管。这就是一个简单的
+      diff的过程。对于老的有多个子元素和新的也有多个自元素的对比更新，每家的优化策略是不一样。
+
+
+
+7. react 无状态函数组件和类组件的区别  
+   函数组件不需要实例化，只是用的时候调用函数返回组件，因此性能更好，但因为没有实例话所以内部没有this，并且没有状态state，没有生命周期函数。
+   类组件需要实例化，内部有this,state，声明周期函数  
+   
+
+
+
+8. 组件跨层级通信，使用context上下文
+   const context = React.createContext();  
+   const Provider = context.provider; // 外层提供数据的组件   
+   const Consumer = context.Consumer;  // 内层获取数据的组件  
+
+
+
+
+
+
+
+
+
+
+redux 
+ 1redux 使用
+ 2react-redux 使用
+ 3react-redux 手写源码
+
+
+
+5. setState更新队列机制,及所以接参数不同
+    class Root extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+            count: 0
+            };
+        }
+        componentDidMount() {
+            this.setState({
+                count: this.state.count + 1
+            });
+            console.log(this.state.count);    // 打印出0
+            this.setState({
+                count: this.state.count + 1
+            });
+            console.log(this.state.count);    // 打印出0
+            setTimeout(function(){      
+                this.setState({count: this.state.count + 1});
+                console.log(this.state.count);   // 打印出2
+            }, 0);
+            setTimeout(function(){
+                this.setState({
+                    count: this.state.count + 1
+                });
+                console.log(this.state.count);   // 打印出3
+            }, 0);
+        }
+    render() {
+        return (
+        <h1>{this.state.count}</h1> // 3
+        )
+    }
+ }
+
+对于setState的执行机制,大致是这样的,react内部有一种(transaction)事务处理机制，我们渲染用ReactDOM.render()去渲染的时候,ReactDefaultBatchingStrategy
+中一个isBatchingUpdates属性会被置为true,然后去执行一个事务(这个事务是去执行生命周期什么的,很多操作)完成首次挂载,首次挂载完成后就开始调用
+componentDidMount()这个函数,执行里面的setState()方法,当执行这个方法的时候会去检测isBatchingUpdates属性是true还是false,这时isBatchingUpdates已被设为true,则会将
+要执行的状态推入一个队列等待批量更新.
+当当前事务执行快要结束的时候(当componentDidMount函数执行完成后)，就去进行批量更新和关闭事务，接下来再进行setState就不会直接推入队列而是去开启一个新事务，
+在新事务中去推入队列然后立即执行更新然后关闭事务。  
+
+案例 2
+class Root extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+  }
+  componentDidMount() {
+    this.setState({
+      count: this.state.count + 1
+    });
+    this.setState({
+      count: this.state.count + 1
+    });
+  }
+  render() {
+    return (
+      <h1>{this.state.count}</h1>   //页面中将打印出1
+    )
+  }
+}
+class Root extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+  }
+  componentDidMount() {
+    this.setState(function(state, props) {
+      return {
+        count: state.count + 1
+      }
+    });
+    this.setState(function(state, props) {
+      return {
+        count: state.count + 1
+      }
+    });
+  }
+  render() {
+    return (
+      <h1>{this.state.count}</h1>   //页面中将打印出2
+    )
+  }
+}
+
+setState()使用函数进行更新state时,和对象时一样也是进行批量更新的,但是源码中在for循环待更新队列进行合并状态的时候,会将每次更新后的状态新值传个setState参数函数,所以setState
+参数函数中拿到的每次都是新的状态值。如果是对象则是直接合并,this.state的值是在后面才被更新的( 是在_processPendingState函数执行完被更新的 ),所以取不到新值。
+
+案例 2
+ class Root extends React.Component {
+     constructor(props) {
+         super(props);
+         this.state = {
+             count: 0
+         };
+     }
+ 
+     componentDidMount() {
+         let me = this;
+         setTimeout(function() {
+             me.setState({count: me.state.count + 1}, function() {
+                 console.log('did callback');
+             });
+             console.log('hello');
+         }, 0);
+     }
+ 
+     componentDidUpdate() {
+         console.log('did update');
+     }
+     render() {
+         return <h1>{this.state.count}</h1>
+     }
+ }
+
+执行完组件首次装载之后就调用了componentDidMount函数，进行一系列的状态批量更新和事务关闭，在进行状态批量更新时先进行组件更新然后再去处理callback队列
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,44 @@
+
+react-router-dom
+    react-router-dom 使用 : 它比react-router多了Link,BrowserRouter这样的DOM类组件
+    1.BrowserRouter: 该组建使用HTML5的histroty API来管理视图，children必须时单节点
+    2.Route: 该组建把一个url和一个组件进行绑定
+        path: 要匹配的url,没有path将匹配任意路由
+        component: 要渲染的组件 (组件内包含参数 路由事件对象 )
+        render: 跟函数，返回要渲染的组件，可传递给组件参数(路由传参)
+        exact: 精确匹配
+        strict: 严格匹配，考虑路径结尾的 /   
+    3.Route 属性中的render (对匹配的路由传递参数))
+    // 路由中参数传递，路由事件对像 e.history 对象的使用实现路由切换( 使用场景比如点击某个按钮，push()到哪个页面, 返回上个页面: goBack(),go(-1) )
+    // <Route render={(e)=>{ return <Component data={ '要往组件传递的数据' } /> }} /> 
+    4.Link: 
+        to: 跳转的路径对象
+    5.Switch: 用该组建包裹只能匹配一项路由，匹配到第一项就停止   
+    
+    6.Redirect: 页面重定向 <Redirect to='/哪个页面'>
+
+    7.路由路径获取,路由事件对象中的 match.params.id取得路由, '/detail/:id'  
+
+    8.404页面设置，借用路由最后添加<Route component={ ()=><div>404 not found页面不存在</div> } /> 和 Switch
+
+    9.路由守卫,封装route，如果登陆就跳转，没登录就重定向到登陆页
+    function RouteDefend({ component: Component, isLogin, ...rest,}) {
+        return (
+            <Route 
+                    {...rest } 
+                    render={ props => (
+                        isLogin 
+                        ? 
+                        <Component {...props} /> 
+                        : 
+                    <Redirect to={{ pathname: "/login",state: { redirect: props.location.pathname }}} />) }/>
+            ); 
+    }
+
+    <RouteDefend path='/cart' component={ Cart } /> 
+
+    10. 进入和离开页面的钩子 onEnter,onLeave react-router-dom 已不支持  
+
+
+
+    react-router 手写源码 

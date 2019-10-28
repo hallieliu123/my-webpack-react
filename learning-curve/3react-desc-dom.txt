@@ -79,19 +79,6 @@ react
 
 
 
-
-
-
-
-
-
-redux 
- 1redux 使用
- 2react-redux 使用
- 3react-redux 手写源码
-
-
-
 5. setState更新队列机制,及所以接参数不同
     class Root extends React.Component {
         constructor(props) {

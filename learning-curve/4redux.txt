@@ -1,0 +1,29 @@
+redux 它是一个状态管理的库，用来管理状态的
+
+    store用来储存状态
+    使用dispacth来发起一个action提交状态到reducer
+    使用reducer去初始化和修改状态,要是一个纯函数,每次相同的输入必须有相同的输出,不能有副作用,不能去做ajax请求啊,console啊，页面跳转啊啥的;
+    redux-thunk 中间件;
+    combineReducers();
+    applyMiddleware();
+    bindActionCreators();
+
+    react-redux, 1可以解决单独使用redux每个组件都要导入store的问题,使用react-redux store从顶层直接传递到子组件，子组件通过上下文可以直接拿到store,操作起来更方便。
+    2不需要我们自己订阅了，react-redux帮我们订阅了
+
+    Provider: 为后代组件提供store
+    connect函数: 1订阅组件的状态变化; 2第一个参数把state映射到props,第二个参数把dipatch映射到props上
+
+    redux默认只支持同步(它的第二个参数是对象，里面每个对应的action函数都必须返回{type:''}，去派发action),不支持异步,异步就需要中间件的支持,redux-thunk;
+
+ 1手写redux源码  v 
+    
+ 3react-redux手写源码: connect, Provider  ( 好像版本太高了，不支持使用static childContextTpypes去设置context了 )
+
+
+
+
+
+
+
+

@@ -16,7 +16,7 @@
         createElement('p', { key: 'b' }, '节点2'),
         createElement('p', { key: 'c' }, '节点3'),
         createElement('p', { key: 'd'}, '节点4'),
-        ])
+        ]);
 
         // 新的 VNode
         const nextVNode = createElement('div', null, [
@@ -25,7 +25,7 @@
         createElement('p', { key: 'b' }, '节点2'),
         createElement('p', { key: 'f' }, '节点6'),
         createElement('p', { key: 'e' ,class:"item-header"}, '节点5'),
-        ])
+        ]);
         render(prevVNode,document.getElementById('app'));
         // console.log(nextVNode);
         setTimeout(()=>{

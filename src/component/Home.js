@@ -1,39 +1,25 @@
-import React, { Component } from 'react'
-import { connect, } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import * as home from '../actions/home';
+import React, { Component } from 'react';
+//import axios from 'axios';
+// import { connect, } from 'react-redux';
+// import { connect } from '../myProvider-myConnect';
+// import { bindActionCreators } from 'redux';
+// import * as home from '../actions/home';
 
-@connect(
-    state=>({
-        a: state.a
-    }),
-    {
-        add: ()=>({type: 'add',value: 1 }),
-    }
-)
 class Home extends Component {
-    handleClick(){
-        this.props.add();
-    }
     render() {
         return (
-            <div onClick={ this.handleClick.bind(this) }>
-                { this.props.a.value }
-            </div>
+           <div> Home </div>
         )
     }
 }
 
 export default Home;
 
-// connect(
-//     state=>({
-//         a: state.a,
-//         b: state.b
-//     }),
-//     dispatch=>({
-//         home:bindActionCreators(home,dispatch)
-//     })
-// )(Home);
+
+
+
+
+
+
 
 

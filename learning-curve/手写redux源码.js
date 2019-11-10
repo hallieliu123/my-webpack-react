@@ -62,14 +62,13 @@ function compose(...funcs){ // [fn1,fn2,fn3]
     if(funcs.length === 1){ // 没有实际应用意义
         return funcs[0]
     }
-    return funcs.reduce((prev,cur)=> (...args) => prev(cur(...args)) );  
+    return funcs.reduce((prev,cur)=> (...args) => prev(cur(...args)));  
 }  
 
 
 
-
 // middleware中间件的功能:
-const myLogger = ({getState,dispatch}) => {
+const myLogger = ({getState,dispatch}) => {   
     console.log('myLogger 1');
     return dispatch => {
         console.log('myLogger 2');
@@ -80,6 +79,7 @@ const myLogger = ({getState,dispatch}) => {
         }
     }
 }
+
 const myThunk = ({getState,dispatch}) => { 
     console.log('myThunk 1');
     return dispatch => {  
@@ -93,3 +93,33 @@ const myThunk = ({getState,dispatch}) => {
         }
     }
 }
+
+
+
+/*
+// 要再练习
+function combindReducer(reducers) {
+    // 第一个只是先过滤一遍 把非function的reducer过滤掉
+  const reducerKeys = Object.keys(reducers)
+  const finalReducers = {}
+  reducerKeys.forEach((key) => {
+      if(typeof reducers[key] === 'function') {
+      finalReducers[key] = reducers[key]
+      } 
+  })
+  const finalReducersKeys = Object.keys(finalReducers)
+    // 第二步比较重要 就是将所有reducer合在一起
+    // 根据key调用每个reducer，将他们的值合并在一起
+    let hasChange = false;
+    const nextState = {};
+    return function combind(state={}, action) {
+        finalReducersKeys.forEach((key) => {
+            const previousValue = state[key];
+            const nextValue = reducers[key](previousValue, action);
+            nextState[key] = nextValue;
+            hasChange = hasChange || previousValue !== nextValue
+        })
+        return hasChange ? nextState : state;
+    }
+}
+*/

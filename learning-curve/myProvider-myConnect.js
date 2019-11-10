@@ -30,8 +30,8 @@ export const connect = (mapStateToProps,mapDispatchToProps) => (wrappedComponent
     }
     componentDidMount(){
         const store = this.context.store;
-        this.update(); // 初始化一次
-        store.subscribe(this.update)
+        this.update(); // 初始化一次   
+        store.subscribe(this.update);
     }
     update(){
         const store = this.context.store;
@@ -59,4 +59,8 @@ export function bindActionCreators(creators,dipatch){
     },{});
 }
 
-const test = () => (dipatch,getState) => {};
+
+
+
+
+

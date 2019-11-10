@@ -29,19 +29,19 @@ react
 
 
 
- 3. 高阶组件的使用
-    高阶函数的概念: 1.函数作为参数被传递  2.函数作为返回值被输出
-    高阶组件的概念: 1.高阶组件是一个接受组件作为参数,返回一个新组件的函数  2.高阶组件是一个函数，不是组件
+ 3. 高阶组件的使用   
+    高阶函数的概念: 1.函数作为参数被传递  2.函数作为返回值被输出     
+    高阶组件的概念: 1.高阶组件是一个接受组件作为参数,返回一个新组件的函数  2.高阶组件是一个函数，不是组件   
 
     代理方式的高阶组件: 返回的新组件继承React.Component,新组件的作用是代理被传入作为参数的组件,新组件在render函数中直接渲染被包裹组件;
         应用： 操作props, 抽取状态, 操作ref, 包装组件
     继承方式的高阶组件: 返回新组件继承被传入的参数组件
-        应用：操作props, 操作声明周期函数
+        应用：操作props, 操作声明周期函数   
     修改高阶组件的显示名称
 
-    复制一个ReactElement(render返回的element)，修改或者说增加一个组件的属性，或者替换children( ??? to test )
+    复制一个ReactElement(render返回的element)，修改或者说增加一个组件的属性，或者替换children
     React.cloneElement(ReactElement,{ 要添加或修改的属性 },ReactElement.props.children);
-    React.Children.map([],item=>{ });    
+    React.Children.map(props.children,item=>{ });    
      
 
 4. useState,
@@ -71,8 +71,8 @@ react
 
 
 
-8. 组件跨层级通信，使用context上下文
-   const context = React.createContext();  
+8. 组件跨层级通信，使用context上下文   
+   const context = React.createContext();     
    const Provider = context.provider; // 外层提供数据的组件   
    const Consumer = context.Consumer;  // 内层获取数据的组件  
 

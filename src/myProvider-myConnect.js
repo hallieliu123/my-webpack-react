@@ -30,10 +30,9 @@ export const connect = (mapStateToProps,mapDispatchToProps) => (WrappedComponent
     }
     componentDidMount(){
         const store = this.context.store;
-        console.log(this.context);
+        console.log('this.context--->',this.context);
         this.update(); // 初始化一次
         store.subscribe(this.update)
-        
     }
     update(){
         const store = this.context.store;
@@ -46,9 +45,11 @@ export const connect = (mapStateToProps,mapDispatchToProps) => (WrappedComponent
         });
     }
     render(){
-        return <WrappedComponent {...this.state}></WrappedComponent>
+        return <WrappedComponent {...this.state }></WrappedComponent>
     }
 }
+
+
 
 export function bindActionCreator(creator,dipatch){
     return (...args) => dispatch(creator(...args));
@@ -60,3 +61,15 @@ export function bindActionCreators(creators,dipatch){
         return prev;
     },{});
 }
+
+
+
+
+
+
+
+
+
+
+
+

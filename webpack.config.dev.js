@@ -12,7 +12,7 @@ module.exports = {
         open: true,
         hot:true,
         proxy:{
-            '/api':'http://127.0.0.1:8080/'  // 设置代理，帮助解决跨域问题
+            // '/api':'http://127.0.0.1:8080/'  // 设置代理，帮助解决跨域问题
         }
     },
     devtool: 'source-map',

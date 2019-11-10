@@ -1,8 +1,8 @@
 
 react-router-dom
     react-router-dom 使用 : 它比react-router多了Link,BrowserRouter这样的DOM类组件
-    1.BrowserRouter: 该组建使用HTML5的histroty API来管理视图，children必须时单节点
-    2.Route: 该组建把一个url和一个组件进行绑定
+    1.BrowserRouter: 该组建使用HTML5的histroty API来管理视图，children必须是单节点
+    2.Route: 该组件把一个url和一个组件进行绑定  
         path: 要匹配的url,没有path将匹配任意路由
         component: 要渲染的组件 (组件内包含参数 路由事件对象 )
         render: 跟函数，返回要渲染的组件，可传递给组件参数(路由传参)
@@ -17,7 +17,7 @@ react-router-dom
     
     6.Redirect: 页面重定向 <Redirect to='/哪个页面'>
 
-    7.路由路径获取,路由事件对象中的 match.params.id取得路由, '/detail/:id'  
+    7.动态路由: 路由路径获取,路由事件对象中的 match.params.id取得路由, '/detail/:id'  
 
     8.404页面设置，借用路由最后添加<Route component={ ()=><div>404 not found页面不存在</div> } /> 和 Switch
 

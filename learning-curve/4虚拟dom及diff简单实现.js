@@ -57,7 +57,6 @@ function createTextVnode(text){
     }
 }
 
-
 // 创建 dom
 function render(vnode,container){ 
     if( container.vnode ){
@@ -175,7 +174,7 @@ function patchElement(prev,next,container){
     if( prev.tag != next.tag ){ // 如果 tag 不一样 一个div vs 一个p
         replaceVnode(prev,next,container);
     }else{ // 一样的话就去对比更新属性  
-        let el = ( next.el = prev.el); // 先把dom节点给新的 vdom  
+        let el = ( next.el = prev.el ); // 先把dom节点给新的 vdom  
         let prevData = prev.data;
         let nextData = next.data;
         if(nextData){ // 去做更新和添加属性
@@ -269,7 +268,7 @@ function  patchChildren(
                         }
                          // 删除中没有的 [a,b,c]      [a,b,c,d] 
                         for(let i=0;i<prevChildren.length;i++){
-                            let has = nextChildren.find(child=>!(prevChildren[i].key==child.key));
+                            let has = nextChildren.find(child=>prevChildren[i].key==child.key);
                             if(!has){
                                 container.removeChild(prevChildren[i].el);
                             }

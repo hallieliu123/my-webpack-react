@@ -22,3 +22,11 @@ export default (WrappedComponent) => class componentName extends Component {
     }
 }
 
+
+
+
+
+
+
+
+

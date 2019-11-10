@@ -1,83 +1,72 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-// import { createStore,applyMiddleware } from 'redux';
-// import thunk from 'redux-thunk';
-// import { Provider } from 'react-redux'; 
+import { createStore,applyMiddleware } from 'redux';
+import thunk from 'redux-thunk';
+import { Provider } from 'react-redux'; 
 import { BrowserRouter,Link,Route,Switch,Redirect} from 'react-router-dom';
-import reducers from './reducer';
-// import Home from './component/Home';
-import Test from './component/Test';
+import Home from './component/Home';
+// import Test from './component/Test';
+// import reducers from './reducer';
 
-import { createStore,applyMiddleware } from './myRedux';
-import { MyProvider } from './myProvider-myConnect';
-
-// middleware中间件的功能:
-const myLogger = ({getState,dispatch}) => {
-    console.log('myLogger 1');
-    return dispatch => {
-        console.log('myLogger 2');
-        return action => {
-            console.log('action.type-->',action.type);
-            console.log('myLogger 3');
-            return dispatch(action);
-        }
-    }
+function Mgt({ history,match,location }){
+    return <div>
+                <h4>management</h4>
+                <button onClick={ history.goBack }>后退</button>
+            </div>
 }
-const myThunk = ({getState,dispatch}) => { 
-    console.log('myThunk 1');
-    return dispatch => {  
-        console.log('myThunk 2');  
-        return action => {
-            console.log('myThunk 3');
-            if(typeof action === 'function'){
-                return action(dispatch,getState);
-            }
-            return dispatch(action);
-        }
-    }
-}
-const store = createStore(
-    reducers,
-    applyMiddleware(myThunk,myLogger)
-);
 
+function Brand({ history,match,location }){
+    return <div>
+                <h4>{ match.params.brand }</h4>
+                <button onClick={ history.goBack }>后退</button>
+            </div>
+}
+function Account({ history,match,location }){
+    return <div>
+                <h3>My Account</h3>
+            </div>
+}
+
+function Login(props){
+    console.log('props->',props);
+    return <div>
+                <h3>Login</h3>
+                <button onClick={ () => props.history.push('management') }>跳转</button>
+            </div>
+}
+
+function PrivateRoute({ component: Component,isLogin,...rest}){
+    return <Route { ...rest } render={ props => isLogin ? <Component /> : <Redirect to={{pathname: '/login',state:{redirect: props.location.pathname } }} />} />
+}
+
+// 路由事件对象  
+// 动态路由      
+// 路由守卫   
 ReactDOM.render(
-    <MyProvider>
-        <BrowserRouter>
-            <Route path='/abc' exact component={ Test } />
-        </BrowserRouter>
-    </MyProvider>,
+    <BrowserRouter>
+        <nav>
+            <Link to='/'>首页</Link>
+            <span> | </span>
+            <Link to='/management'>管理</Link>
+            <span> | </span>
+            <Link to='/detail/sephora'>丝芙兰详情</Link>
+            <span> | </span>
+            <Link to='/myaccount'>我的</Link>
+        </nav>
+        <Route path='/' exact component={ Home } />
+        <Route path='/management' component={ Mgt } />
+        <Route path='/detail/:brand' component={ Brand } />
+        <Route path='/login' component={ Login } />
+        <PrivateRoute path='/myaccount' component={ Account } />
+    </BrowserRouter>,
     document.getElementById('app')
 )
-/**
- * 
- */
 
 /* if(module.hot){ // webpack 实现js的hmr需要使用 react-hot-loader
     module.hot.accept('./b',function(){  
         document.getElementsByClassName('test')[0].innerHTML='456';
     });
 } */
-
-/**
- * * react-redux
- const store = createStore(
-    reducers,
-    // applyMiddleware(thunk)
-);
- <Provider store={ store }>
-    <BrowserRouter>
-        <Route path='/' exact component={ Home } />
-    </BrowserRouter>
-</Provider>
-ReactDOM.render(  
-    <BrowserRouter>
-        <Route path='/abc' exact component={ Test } />
-    </BrowserRouter>,
-    document.getElementById('app')
-);
- */
-
 
 
 

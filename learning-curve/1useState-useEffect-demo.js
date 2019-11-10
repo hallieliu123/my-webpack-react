@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState,useEffect } from 'react'; 
+import React,{ useState,useEffect } from 'react';
 
 function FruitsList({fruits,selectFruit}) {
     return (
@@ -25,7 +24,7 @@ function AddFruit({add}){
 function componentName() {
     let [fruit,setFruit] = useState('');
     let [fruits,setFruits] = useState([]);
-    useEffect(()=>{  // 组件初始化时就会执行一次副作用操作
+    useEffect( async ()=>{  // 组件初始化时就会执行一次副作用操作
         console.log('fruit');
         setTimeout(()=>{
             setFruits(['香蕉','苹果','西瓜','菠萝']);

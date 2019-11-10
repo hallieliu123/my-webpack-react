@@ -1,4 +1,4 @@
-webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
+webpack 打包，编译器 ( webpack不依赖babel既可以支持 es6 module )
 
 // 1.配置 webpack 文件, webpack.config.js是在nodejs运行的,所以要使用commonjs的语法
       webpack.config.js中entry和output配置,output要用绝对路径.
@@ -7,7 +7,7 @@ webpack 打包，编译器 (webpack不依赖babel既可以支持 es6 module)
 
 
  2.插件的使用，简单介绍 
-    plugins: [] 数组
+    plugins: [] 数组 
     html-webpack-plugin : 用来自动创建一个html文件，可自定义文件名称，模板(将模板内容插入新文件里面)
     htmlWebpackPlugin({ filname:'index.html',template:'' });
 
@@ -279,14 +279,13 @@ b.(不懂原理)babel-pollyfil,babel-transform-runtime,babel-preset-env 区别
     babel-transform-runtime 不支持内置对象的新方法，但可以按需引入，打包体积小
     babel-preset-env 可按需引入，可配置性高
 
-
 c. ( v4版本才支持 ) mini-css-extract-plugin,new MiniCssExtractPlugin({filenam:'[name]-[chunkhash:8].css'})，将css压缩并抽取出来   
 
 
 d.webpack-dev-server || hmr 实现原理  
 
 
-    网页和webpack-dev-sever通过webSockets建立了一个连接，然后监听文件，发现变化，告诉页面调用reload接口刷新页面 或者是更新页面内容 
+    网页和 webpack-dev-sever 通过webSockets建立了一个连接，然后监听文件，发现变化，告诉页面调用reload接口刷新页面 或者是更新页面内容 
 
 
 e.对于webSockets: 查看课本

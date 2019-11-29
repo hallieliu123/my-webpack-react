@@ -18,7 +18,7 @@ redux 它是一个状态管理的库，用来管理状态的
 
  1手写redux源码  v 
     
- 3react-redux手写源码: connect, Provider  ( 好像版本太高了，不支持使用static childContextTpypes去设置context了 )
+ 3react-redux手写源码: connect, Provider 
 
 
 

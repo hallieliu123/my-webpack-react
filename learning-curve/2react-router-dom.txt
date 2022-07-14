@@ -1,7 +1,6 @@
 
 react-router-dom
-    react-router-dom 使用 : 它比react-router多了Link,BrowserRouter这样的DOM类组件
-    1.BrowserRouter: 该组建使用HTML5的histroty API来管理视图，children必须是单节点
+    1.BrowserRouter: 该组建使用HTML5的histroty API来管理视图,children必须是单节点
     2.Route: 该组件把一个url和一个组件进行绑定  
         path: 要匹配的url,没有path将匹配任意路由
         component: 要渲染的组件 (组件内包含参数 路由事件对象 )
@@ -11,7 +10,7 @@ react-router-dom
     3.Route 属性中的render (对匹配的路由传递参数))
     // 路由中参数传递，路由事件对像 e.history 对象的使用实现路由切换( 使用场景比如点击某个按钮，push()到哪个页面, 返回上个页面: goBack(),go(-1) )
     // <Route render={(e)=>{ return <Component data={ '要往组件传递的数据' } /> }} /> 
-    4.Link: 
+    4.Link:
         to: 跳转的路径对象
     5.Switch: 用该组建包裹只能匹配一项路由，匹配到第一项就停止   
     
@@ -40,5 +39,24 @@ react-router-dom
     10. 进入和离开页面的钩子 onEnter,onLeave react-router-dom 已不支持  
 
 
+// 对于react-router-dom, 会熟练使用就可以了, 需要掌握:
+   
+   路由事件对象在 Route component={<组件/>} 内部,可以通过 props获取,包括 match(里面有params: props.match.params.id 获取id, /abc/:id), 
+   location, history( history.goBack())
+   现在hooks是用 hooks获取了如： const { id } = useParams();
 
-    react-router 手写源码 
+   未登录用户怎样实现跳转
+
+
+
+
+
+
+
+
+
+
+
+
+
+

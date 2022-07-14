@@ -57,13 +57,13 @@ export const applyMiddleware = (...middlewares) => {
 
 function compose(...funcs){ // [fn1,fn2,fn3] 
     if(funcs.length === 0){ // 没有实际应用意义
-        return (...args) => args;
+        return (args) => args;
     }
     if(funcs.length === 1){ // 没有实际应用意义
-        return funcs[0]
+        return funcs[0];
     }
-    return funcs.reduce((prev,cur)=> (...args) => prev(cur(...args)));  
-}  
+    return funcs.reduce((prev,cur)=> (...args) => cur(prev(...args))); // (args)=>fn2(fn1(args));   (dispatch)=>fn3(prev(dispatch))
+}
 
 
 
@@ -80,9 +80,9 @@ const myLogger = ({getState,dispatch}) => {
     }
 }
 
-const myThunk = ({getState,dispatch}) => { 
+const myThunk = ({getState,dispatch}) => {
     console.log('myThunk 1');
-    return dispatch => {  
+    return dispatch => {  // 按照applyMiddleWare(myLogger,myThunk)顺序, 实际这里的dispatch是myLogger返回的action=>{}
         console.log('myThunk 2');  
         return action => {
             console.log('myThunk 3');
@@ -96,30 +96,29 @@ const myThunk = ({getState,dispatch}) => {
 
 
 
-/*
+
 // 要再练习
-function combindReducer(reducers) {
+function combineReducer(reducers) {
     // 第一个只是先过滤一遍 把非function的reducer过滤掉
-  const reducerKeys = Object.keys(reducers)
+  const reducerKeys = Object.keys(reducers); 
   const finalReducers = {}
   reducerKeys.forEach((key) => {
       if(typeof reducers[key] === 'function') {
       finalReducers[key] = reducers[key]
       } 
   })
-  const finalReducersKeys = Object.keys(finalReducers)
+  const finalReducersKeys = Object.keys(finalReducers) // {home, category}
     // 第二步比较重要 就是将所有reducer合在一起
     // 根据key调用每个reducer，将他们的值合并在一起
-    let hasChange = false;
     const nextState = {};
-    return function combind(state={}, action) {
+    return function combine(state={}, action) { // home: {counter: 1, name: 'sheldon'}
+        let hasChange = false;
         finalReducersKeys.forEach((key) => {
-            const previousValue = state[key];
-            const nextValue = reducers[key](previousValue, action);
+            const previousValue = state[key]; // 有值了
+            const nextValue = finalReducers[key](previousValue, action); // {counter: 1, name: 'Amy'}
             nextState[key] = nextValue;
             hasChange = hasChange || previousValue !== nextValue
         })
         return hasChange ? nextState : state;
     }
 }
-*/

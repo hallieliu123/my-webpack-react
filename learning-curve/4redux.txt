@@ -8,8 +8,8 @@ redux 它是一个状态管理的库，用来管理状态的
     applyMiddleware();
     bindActionCreators();
 
-    react-redux, 1可以解决单独使用redux每个组件都要导入store的问题,使用react-redux store从顶层直接传递到子组件，子组件通过上下文可以直接拿到store,操作起来更方便。
-    2不需要我们自己订阅了，react-redux帮我们订阅了
+    react-redux, 1可以解决单独使用redux每个组件都要导入store的问题,,使用react-redux store从顶层直接传递到子组件，子组件通过上下文可以直接拿到store,操作起来更方便。
+    2并且每个组件都要订阅store监听一旦改变就forceUpdate(),不需要我们自己订阅了，react-redux帮我们订阅了
 
     Provider: 为后代组件提供store
     connect函数: 1订阅组件的状态变化; 2第一个参数把state映射到props,第二个参数把dipatch映射到props上
@@ -19,8 +19,6 @@ redux 它是一个状态管理的库，用来管理状态的
  1手写redux源码  v 
     
  3react-redux手写源码: connect, Provider  ( 好像版本太高了，不支持使用static childContextTpypes去设置context了 )
-
-
 
 
 

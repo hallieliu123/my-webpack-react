@@ -19,7 +19,18 @@ export class MyProvider extends Component{
 }
 
 // connect(mapStateToProps,mapDispatchToProps)(wrappedComponent);
-
+/**
+ * const mapStateToProps = state => ({
+ *     home: state.home
+ * })
+ * const mapDispatchToProps = dispatch => ({
+ *      add,
+ *      logig
+ * })
+ * const mapDispatchToProps = dispatch => ({
+ *      category: bindActionCreators(categoryActions, dispatch)
+ * })
+ */
 export const connect = (mapStateToProps,mapDispatchToProps) => (wrappedComponent) => class ComponentName extends Component{
     static contextTypes = {
         store: PropTypes.object
@@ -36,7 +47,7 @@ export const connect = (mapStateToProps,mapDispatchToProps) => (wrappedComponent
     update(){
         const store = this.context.store;
         const stateProps = mapStateToProps(store.getState);
-        const dipatchProps = bindActionCreators(mapDispatchToProps,store.dipatch);
+        const dipatchProps = bindActionCreators(mapDispatchToProps, store.dipatch);
         this.setState({
             ...this.state,
             ...stateProps,
@@ -49,18 +60,20 @@ export const connect = (mapStateToProps,mapDispatchToProps) => (wrappedComponent
 }
 
 export function bindActionCreator(creator,dipatch){
-    return (...args) => dispatch(creator(...args));
+    return (...args) => dispatch(creator(...args)); // function(..arg)=>dispatch({type: 'TYPE_TEST'});
 }
-
-export function bindActionCreators(creators,dipatch){
-    return Object.keys(creators).reduce((prev,cur)=>{
-        prev[key] = bindActionCreator(cur,dipatch)
+/**
+ * {
+ *  login: ()=>({type: ''}),
+ *  logout: ()=>({type: ''})
+ * }
+ */
+export function bindActionCreators(creators, dipatch){  
+    return Object.keys(creators).reduce((prev,cur)=>{ // [login, logout]
+        prev[key] = bindActionCreator(creators[cur], dipatch)
         return prev;
     },{});
 }
-
-
-
 
 
 

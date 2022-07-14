@@ -1,4 +1,8 @@
 react
+
+补充: class组件中事件绑定bind(this)问题: 因为如果不去绑定this, 那么this指向的是那个元素的实例，而不是组件实例
+      父 -> 子 组件通信 props,   子 -> 父  组件通信 通过父组件传给子组件的函数，也称为状态提升
+
 1. 生命周期函数
     v16版本之前的
     初始化阶段：constructor()
@@ -8,22 +12,28 @@ react
             componentWillReceiveProps(nextProps) -> shouldComponentUpdate(nextProps,nextState) -> componentWillUpdate(nextProps, nextState)
             -> render() -> componentDidUpdate(prevProps,prevState)
         自身state改变导致的更新:  
-            shouldComponentUpdate(nextProps,nextState) -> componentWillUpdate(nextProps, nextState) -> render() -> componentDidUpdate(prevProps,prevState)
+            shouldComponentUpdate(nextProps,nextState) -> componentWillUpdate(nextProps, nextState) -> render() -> componentDidUpdate(prevProps,prevState,snapshot)
             shouldComponentUpdate使用这个方法可以减少组件不必要的更新，优化组件性能
             (现在才知道自己以前写的代码有多烂了，中间有无数次的没用的组件更新)
     卸载阶段：componentWillUnmout()  
 
-    v16.4之后的
-    增加了static getDerivedStateFromProps(nextProps, currentState)，每次组件被重新渲染前被调用,不管是内部setState还是父组件传入的props变化还是父组件的更新。
-        它必须返回一个object作为setState的updater来更新组件，或者返回null,什么都不更新
-    增加了getSnapshotBeforeUpdate(prevProps,prevState),(没想到使用场景)在组件更新(不是挂载的时候)render之后componentDidUpdate之前调用，可以读取但无法使用DOM的时候
 
-    取消了：componentWillMount，componentWillReceiveProps，componentWillUpdate   
+补充：取代了 componentWillMount(), componentWillUpdate(), componentWillReceiveProps() 其中 在自身state更新时, static getDerivedStateFromProps(props, state)
+     执行在 shouldComponentUpdate() 之前。并且因为其为静态方法内部访问不到 this 实例, 所以参数为 props, state;
+补充：static getDerivedStateFromError(error){return {hasError: true} // 状态} 用以子组件有错误，进行降级UI渲染
+    v16.4之后的
+    增加了static getDerivedStateFromProps(props, state)，每次组件被重新渲染前被调用,不管是内部setState还是父组件传入的props变化还是父组件的更新。
+        它必须返回一个object作为setState的updater来更新组件，或者返回null,什么都不更新.
+    增加了getSnapshotBeforeUpdate(prevProps,prevState){return 返回值传给componentDidUpdate(nextProps,nextState,snapshot)},
+    在组件更新(不是挂载的时候)render之后,componentDidUpdate之前调用，可以读取但无法使用DOM的时候,
+    官方文档给出一个使用场景是以特殊方式处理滚动位置的聊天线程。
+
+    取消了：componentWillMount，componentWillReceiveProps，componentWillUpdate
 
 
 
  2. 组件复合,也叫做插槽
-    插槽this.props.children: 使用场景表述。 
+    插槽this.props.children: 使用场景表述。
     牛逼的具名插槽: 使用场景表述。
     不常用的作用域插槽: 能传参数控制显示的数据，很灵活。
 
@@ -31,7 +41,7 @@ react
 
  3. 高阶组件的使用   
     高阶函数的概念: 1.函数作为参数被传递  2.函数作为返回值被输出     
-    高阶组件的概念: 1.高阶组件是一个接受组件作为参数,返回一个新组件的函数  2.高阶组件是一个函数，不是组件   
+    高阶组件的概念: 1.高阶组件是一个接受组件作为参数,返回一个新组件的函数  2.高阶组件是一个工厂函数，不是组件  
 
     代理方式的高阶组件: 返回的新组件继承React.Component,新组件的作用是代理被传入作为参数的组件,新组件在render函数中直接渲染被包裹组件;
         应用： 操作props, 抽取状态, 操作ref, 包装组件
@@ -41,13 +51,22 @@ react
 
     复制一个ReactElement(render返回的element)，修改或者说增加一个组件的属性，或者替换children
     React.cloneElement(ReactElement,{ 要添加或修改的属性 },ReactElement.props.children);
-    React.Children.map(props.children,item=>{ });    
+    React.Children.map(props.children,item=>{ });
      
 
 4. useState,
-   useEffect(用来处理有副作用的操作,比如异步操作,修改dom,setTimeout等...有些副作用是要清楚的，比如clearInterval(timerId).还有它的第二个参数是依赖，只要依赖有变化副作用操作就会执行),
+   useEffect(用来处理有副作用的操作,比如异步操作,修改dom,setTimeout等...有些副作用是要清楚的，比如clearInterval(timerId).还有它的第二个参数是依赖，只要依赖有变化副作用操作就会执行, 没有依赖则不会执行),
+   可以将useEffect看作 componentDidMount,componentDidUpdate,componentWillUnmount 的组合
    useReducer 没有体会出它的好处，感觉useState使用起来已经很灵活了
    useContext 很容易实现解耦,不必一层层传递参数,类似redux
+   
+   补充：
+    1.hook的优点: 使用多个 Effect 实现关注点分离,使用 Hook 其中一个目的就是要解决 class 中生命周期函数经常包含不相关的逻辑，但又把相关逻辑分离到了几个不同方法中的问题。
+      Hook 允许我们按照代码的用途分离他们， 而不是像生命周期函数那样。
+    2.通过跳过 Effect 进行性能优化: 如果想执行只运行一次的 effect（仅在组件挂载和卸载时执行），可以传递一个空数组（[]）
+    3.自定义hook: 在 React 中有两种流行的方式来共享组件之间的状态逻辑: render props 和高阶组件,
+      自定义 Hook 是一个函数，其名称以 “use” 开头，函数内部可以调用其他的 Hook, 在两个组件中使用相同的 Hook 不会共享 state
+    
 
 
 6. react 虚拟dom原理    

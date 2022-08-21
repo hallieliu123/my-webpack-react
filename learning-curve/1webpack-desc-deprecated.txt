@@ -1,9 +1,29 @@
-webpack 打包，编译器 ( webpack不依赖babel既可以支持 es6 module )
+// 什么是 webpack: 是模块打包工具, 将js模块和一些其他浏览器不支持的模块,打包编译可在浏览器运行的语言。
+   webpack-cli 是一个用来在命令行运行webpack的工具。
+
+// webpack -v 指向全局的 webpack-cli, 可以使用 npx webpack -v 或者 ./node_modules/.bin/webpck -v 查看local webpack 安装信息
+
+// npm info webpack 查看webpack历史版本信息
+
+// 局部安装的模块会在node_module中的.bin目录中生成一个软链接, 所以 npm run dev时, package.json中 "dev": "webpack" 用的是.bin目录下的webpack
+
+
+// output: { path: 必须是绝对路径, filename: [name]_[chunkhash:8].js}
+// filename处可以使用name占位符,这样打包出来的文件名和入口文件定义的key一致了
+// 后面使用chunkhash:8位, 多入口文件打包时: 这样每次文件改变打包出来的文件名称不同, 没改变的文件名称不变可继续使用浏览器缓存。 --> 性能优化之一
+
+// 为什么不用hash 而用chunkhash呢? chunkhash与hash的区别在于: 
+// chunkhash是与入口文件key有对应关系, 文件不变chunkhash不变. 而使用hash,所有文件名后的hash值相同, 任意文件改变时hash打包出的文件名就会改变
+
+
+// mode: 配置后会自动调用webpack一些 plugin
+// development 配置后在热更新阶段, 会将改变的模块名称打印出来
+// production 配置后会将文件自动压缩打包,启动tree shaking等功能
+// none 配置后退出任何默认优化选项
+
 
 // 1.配置 webpack 文件, webpack.config.js是在nodejs运行的,所以要使用commonjs的语法
-      webpack.config.js中entry和output配置,output要用绝对路径.
-      安装 webpack 3版本, 配置 package.json中scripts命令
-      安装 webpack 4版本, 配置mode，告诉是生产环境还是开发环境
+    
 
 
  2.插件的使用，简单介绍 
@@ -217,10 +237,10 @@ webpack 打包，编译器 ( webpack不依赖babel既可以支持 es6 module )
         register: ''
     }, 
     出口设置 
-    output:{
-        filename: '[name]-[chunkhash:8].js', // chunkhash在文件不改变的情况下名称不变，能够在发布线上时，不变的文件继续使用缓存。与hash的区别在与hash每次打包一定改变
-        path: '绝对路径'
-    }
+    output:{filename: '[name]-[chunkhash:8].js',path: '必须是绝对路径'}
+    // [name]占位符,打包出来的文件名称会使用入口文件key的名称
+    // chunkhash:8位,这样每次文件改变打包出来的文件名称不同, 没改变的文件名称不变可继续使用浏览器缓存。 --> 性能优化之一
+    // chunkhash与hash的区别在于: 所有文件名后的hash值相同, 任意文件改变时hash打包出的文件名就会改变。
 
 16. 多次 new htmlWebpackPlugin({filename:'',template:'',chunks:['']}),则会多次生成 html 文件, chunks可以自己定义注入的 js 文件
 

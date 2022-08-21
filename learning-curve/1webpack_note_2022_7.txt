@@ -1,0 +1,341 @@
+// 什么是 webpack: 是模块打包工具, 将js模块和一些其他浏览器不支持的模块,打包编译可在浏览器运行的语言。
+   webpack-cli 是一个用来在命令行运行webpack的工具。
+
+// webpack -v 指向全局的 webpack-cli, 可以使用 npx webpack -v 或者 ./node_modules/.bin/webpck -v 查看local webpack 安装信息
+
+// npm info webpack 查看webpack历史版本信息
+
+// 局部安装的模块会在node_module中的.bin目录中生成一个软链接, 所以 npm run dev时, package.json中 "dev": "webpack" 用的是.bin目录下的webpack
+
+
+// output: { path: 必须是绝对路径, filename: [name]_[chunkhash:8].js}
+// filename处可以使用name占位符,这样打包出来的文件名和入口文件定义的key一致了
+// 后面使用chunkhash:8位, 多入口文件打包时: 这样每次文件改变打包出来的文件名称不同, 没改变的文件名称不变可继续使用浏览器缓存。 --> 性能优化之一
+
+// 为什么不用hash 而用chunkhash呢? chunkhash与hash的区别在于: 
+// chunkhash是与入口文件key有对应关系, 文件不变chunkhash不变. 而使用hash,所有文件名后的hash值相同, 任意文件改变时hash打包出的文件名就会改变
+// contenthash是在js引入的css内容不改变而js文件改变时,生成的css文件名不会改变, 反过来, css内容改变 打包后的js文件名和css文件名都会改变
+// 目前看来 chunkhash可以用于 js 打包
+
+// mode: 配置后会自动调用webpack一些 plugin
+// development 配置后在热更新阶段, 会将改变的模块名称打印出来
+// production 配置后会将文件自动压缩打包,启动tree shaking等功能
+// none 配置后退出任何默认优化选项
+
+// loader: 进行模块解析、编译等
+
+// file-loader: 用于解析模块内引用的图片,新字体(实际只是将 模块内的 图片移到 output 定义的目录, 并且改个文件名称)
+{
+   test: /\.(woff|woff2|ttf|eot)$/,
+   use: {
+      loader: 'file-loader',
+      options: {
+         outputPath: '/fonts',
+         name: [name].[ext] // [name占位符使用原文件名称].[ext使用原文件格式类型]
+      }
+   }
+}
+
+// url-loader: 内部使用了file-loader,可以做file-loader的所有事情,并且可以把小于设置大小的图片以 base64 的格式打包入js文件, 
+//  这样做的好处就是 可以减少请求, 对于过大图片不适合打包进入js文件,会增大js文件体积   -- 性能优化之二
+{
+   test: /\.(jpe?g|png|gif)$/,
+   use: {
+      loader: 'url-loader',
+      options: {
+         outputPath: '/images',
+         name: [name].[ext],
+         limit: 2048   // (2kb)
+      }
+   }
+}
+
+// file-loader, url-loader 在webpack5中已废弃，代之以配置 type:'asset/resource'
+{
+   test: /\.(png|jpe?g|gif|svg)$/,
+   type: 'asset', // 默认小于8kb时使用inline,也就是将小于这个大小的图片以base64格式字符串打包引入js包,同url-loader行为一致.超过8kb就使用resource属性不打包进入js,可通过下面属性更改:
+   parser: {
+      dataUrlCondition: {
+         maxSize: 4*1024 // 小于4kb就以data uri的形式打包进入js        ---- 性能优化之二
+      }
+   },
+   generator: {
+      filename: 'images/[name][ext]' // 一定要相对路径, 将图片放入 output.path下的这个路径
+   }
+}
+{
+   test: /\.(woff|woff2|svg|eot)$/,
+   type: 'asset/resource', // 行为和file-loader一致, 修改引用图片或字体名称, 将资源输入到指定路径
+   generator: {
+      filename: 'fonts/[name][ext]'// 一定是相对路径
+   }
+}
+
+
+// webpack --watch 或者 webpack.config.js中配置:
+watch: true,
+watchOptions: {
+   ignored: /node_modules/, // 不监听的文件或者目录，可使用正则
+   aggregateTimeout: 300 // 默认300毫秒，文件变化后等待300ms后再去执行
+   poll: 1000, // 轮询指定监听文件的间隔时间, 单位ms
+}
+// wacth 轮询监听文件变化,自动打包编译,但不会自动刷新浏览器。  也特别消耗性能,不建议开启
+
+
+// 样式处理, style-loader, css-loader, sass-loader
+{
+   test: /\.(css|scss)$/,
+   use: ['style-loader', 'css-loader', 'sass-loader', {
+      loader: 'postcss-loader',
+      options: {
+         postcssOptions: {
+            plugins: ()=>[
+               require('autoprefixer')({overrideBrowsersList: ['last 2 versions', '>1%']}) // [要支持最新两个版本,市场占有率大于百分之一]
+            ]
+         }
+      }
+   }] // loader执行顺序从右向左执行, 从下到上
+   // sass-loader: 将scss编译为css
+   // css-loader: 将各个模块内的css打包合并到一处,生成css字符串(根据是否使用模块化可配置是否是字符串),也帮助自动引入url()内的路径
+   // style-loader: 将打包后的css使用style标签插入html头部, 
+   // {
+         options: {
+            injectType: 'singletonStyleTag' // 多个css文件指定使用一个style tag 插入，不要多个style tag, 也可以使用 link 配置
+         }
+   // }
+   // postcss-loader: 对css|scss等进行预处理, 比如使用插件 autoprefixer 为css3适配浏览器添加前缀
+}
+
+// 可以将postcss-loader配置抽离出来到一个单独文件postcss.config.js当中以减小webpack.config.js的体积
+// postcss.config.js
+module.exports = {
+   plugins: [
+      require('autoprefixer')({
+         overrideBrowsersList: ['last 2 versions', '>1%'];
+      })
+   ]
+}
+
+// plugins 可以在webpack构建过程中通过扩展逻辑来改变构建结果
+// html-webpack-plugin 用于打包结束后生成一个html文件, 将打包后的js,css自动引入该文件.
+{
+   plugins: [
+      new HtmlWebpackPlugin({ // 可以多次多用以生成多个
+         template: './src/index.html', // 用于生成html使用的模版
+         inject: true // 是否引入js文件, 常用的有 true|body|head|false, true和body一样，在body结束标签前引入
+         // chunks: ['index'] // 引入特定的js文件
+         //filename: 'index.html' // 输出的html文件名，默认为index.html
+      }),
+      new HtmlWebpackPlugin({
+         template: './src/index.html',
+         inject: true,
+         // chunks: ['login'],
+         //filename: 'login.html'
+      })
+   ]
+}
+
+// clean-webpack-plugin 删除打包的目录, 
+{
+   plugins: [
+      new CleanWebpackPlugin()
+   ]
+}
+// 现在有了新属性 支持这一功能
+{
+   output: {
+      path: '', // 绝对路径
+      //clean: true, // 删除打包的目录
+      clean: {
+         keep: /ignored\/dir\// 保留'ignored/dir' 下的静态资源
+      }
+   }
+}
+
+// mini-css-extract-plugin
+{
+   module: {
+      rules: [
+         {
+            test: /\.(css|scss)$/,
+            use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader', 'postcss-loader']
+         }
+      ]
+   },
+   plugins: [
+      new MiniCssExtractPlugin({
+         filename: '[name]_[contenthash:8].css',
+         // [name占位符]_[contenthash:8使用内容hash,因为css模块被引入在js模块中,但是只有js改变了,
+         // css内容并没有改变,使用contenthash只要内容不变就不会重新打包,文件名就不会改变浏览器可以使用缓存] -- 性能优化之三
+      })
+   ]
+}
+
+
+// --- 以上为第二节课
+
+// 1 提升开发效率:
+
+// devtool 用以生成打包后代码与源代码映射关系的文件, 生产环境一般配置为 ‘none’
+// devtool: 'eval-cheap-module-source-map', // 开发环境一般使用这个, 会映射行数,有loader的source map, 不会生成.map文件
+// cheap: 不显示列信息; eval: 使用eval包裹打包后代码;  module: 包含loader中的source map; source-map: 生成.map文件
+
+
+// webpack-dev-server: 自动打包编译,打开浏览器,并且将打包后的文件放入内存中而不是放在 output.path 目录里, 从而提升打包速度
+webpackDevSever: {
+   open: true, // 是否去打开浏览器,每次css或js更新都会去刷新浏览器
+   port: 3000, // 监听端口号
+   static: '/dist' // 资源路径,默认是outpath.path路径
+   hot: 'only', // 'only'即使HMR不生效,也不自动刷新浏览器,  true HMR不生效即刷新浏览器, false 禁用 HMR;
+   // (注意: 开启HMR后, 当使用了MiniCssExtractPlugin处理css后,css不能局部更新了,所以开发环境要使用style-loader)
+   proxy: {
+      '/api': {
+         target: 'http://localhost:8000' // 开发中mock数据开发,跨域问题解决, 这样使用webpackDevServer做代理就没有跨域问题了
+      }
+   }
+}
+// HMR Hot Module Replacement 热模块更新:在不刷新浏览器的情况下实现页面的局部更新, webpack-dev-server v4版本以上只要使用devSever则自动启用webpack.HotModuleReplacementPlugin
+// 因此不需要在webpack.config.js中再添加这个plugin了;
+// 对于js来讲还要增加一项配置才可以实现HMR
+if(module.hot) {
+   moduel.hot.accept('./模块',()=>{
+      // ... 模块有变更, 触发此函数删除原来数据, 重新执行模块代码, 是的,这些逻辑都要在这里写
+   });
+}
+// webpack-dev-server 和 hmr 的原理是 监听文件变化, dev-server 与浏览器之间通过websockets建立了一个链接，一旦文件改变，就调用
+// 浏览器的reload方法刷新页面，或者hmr是一旦某个模块改变就先移除那个模块再更新。
+// 原理就是 使用HMR的模块每一个模块都有对应的id, 一旦某个模块改变就先移除该模块再更新。(在doc中有稍微详细的原理讲解)
+
+// 按环境拆分webpack.config.js 
+
+// @babel/pollyfill: 垫片用于支持 es6+ 语法或支持低版本浏览器, 它是通过创建全局对象如Promise,weakMap,或修改Array,String等原型链来打包编译的。
+//这样就会污染全局作用域。 对于想要开源的项目或发布到npm的工具包来说不可以使用,因为会如染用户的全局作用域。
+// 它内部只包含core-js和regenerator-runtime两个包, 并且在core-js@3中放弃支持@babel/pollyfill;
+// 在使用 useBuiltins: 'usage 按需加载' 时, 还是去调用的 core-js, 所以依然会污染作用域.
+
+// core-js@3版本中: core-js定义全局的polyfill, core-js-pure提供不污染全局环境的polyfill;
+
+// @babel/plugin-transform-runtime: 内部即是依赖的core-js-pure 和 @babel/runtime,将依赖的全局内置对象抽取成单独的模块,并通过模块的方式导入,
+// 所以不会如染全局作用域
+
+// babel-loader: 是babel与webpack通信的桥梁, @babel/preset-env 才是将es6+编译为es5的工具, @babel/preset-env配置
+{
+   "presets": [
+        "@babel/react-preset", // 配置支持 react
+        [
+            "@babel/preset-env",
+            {
+                "useBuiltIns": "usage", //按需加载
+                "corejs": 3, // 使用core-js@3版本
+                "targets": {
+                    "browsers": ["last 2 versions", "not ie <= 10"]
+                }
+            }
+        ]
+   ],
+// plugins: ["@babel/plugin-transform-runtime"]  // 二者选其一即可
+}
+
+// 配置支持 react, 见babel loader配置
+
+
+//-----以下为第 3 节课内容
+
+// tree shaking ‘摇树’只支持es module, 将没有import{方法}的代码摇掉, 生产中自动开启, sideEffects 也默认 不会摇掉 *css 文件,
+// 配合sideEffects参数一起使用,指定不需要摇掉的模块;或者 false,没有副作用 所有没有在import{方法}内的方法全部摇掉,包括 import '*.css';
+{
+   optimization: {        --- 性能优化之四
+      usedExports: true, // 生产中实际不需要配置默认开启
+   }
+}
+package.json中添加:
+sideEffects: ['*.css']
+
+// code splitting:   --- 性能优化之五
+{
+   optimization: {
+      moduleIds: 'deterministic', // 以保证vendor的hash不会改变
+      runtimeChunk: 'single', //将每次webpack运行时的引导代码单独打包,以防每次打包main模块在没有修改的情况下hash也变更(新版webpack可能不会有这个问题)
+      splitChunks: { // 内部实际使用的是 splitChunksPlugin
+         chunks: 'all' // all|async|initial, 都支持|只支持异步|只支持同步 加载的代码块. 比如说像 react, react-dom 被单独打包成一个模块了
+         automaticNameDelimiter: '_', // 打包名称分割符
+         cacheGroups: { // 此配置会继承/覆盖上面的属性
+            vendor: {
+               test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+               name: 'vendor',
+               priority: -10 // 抽取模块优先级, 为负数 -20 - 0, 数值越大优先级越高
+            },
+            other: {
+               test: /lodash/, // 例子
+               name: 'other',
+               priority: -15,
+            },
+            commons: { // 创建 common chunk, 入口文件---之间---的所有共享代码（要研究一下单页面应用怎么抽取）
+               name: 'commons',
+               chunks: 'initial', 
+               minSize: 0, // 默认当模块大于20000(20kb)才会被拆分
+               minChunks: 2, // 最小共享模块数 - 大于这个数字就会拆分
+               reuseExistingChunk: true, // 当前模块包含已从主bundle中拆出来的模块,则重用那个模块,不再重新生成一个新模块,这可能会影响chunk结果文件名
+               priority: -20, // 抽取模块优先级
+               // enforce: true, //true忽略一写最小限制,比如说minSize, minChunks等. 默认为 false
+            },
+         }
+      },
+   }
+}
+
+// import('./模块'), require.ensure([],()=>{})已被import替代;   // 懒加载, 会自动进行代码分割      --- 性能优化之六
+// import('按需加载 | 并行加载', './模块') 可将 按需加载 和 并行加载
+// 按需加载 webpackPrefectch: true, 父模块加载完,浏览器空闲时加载此模块, 会自动生成一个<link rel='prefetch' href='模块'/> 标签并追加到页面头部
+// 并行加载 webpackPreload: true, 与父模块并行加载, 使用不当会造成性能损耗,会自动生成一个<link rel='preload' href='模块'/> 标签并追加到页面头部
+
+
+// assets-webpack-plugin 将打包出的文件名称及其路径抽离到一个json文件中, ssr时可以用。
+
+// webpack 打包原理
+// 1解析入口路径, fs读取入口文件
+// 2解析读到入口文件内容,将文件内容使用@babel/parser解析出一个ast抽象语法树
+// 3然后再使用@babel/traverse去解析这个语法树,拿到入口文件的 代码块 以及 依赖
+// 4处理代码:使用@babel/core和@babel/preset-env去解析代码块转成浏览器可执行的代码
+// 5分析依赖:去解析依赖内的代码
+// 6至此就生成了 路径对应 编译后的 code 和 依赖 的对象
+// 7做完以上这些事生成 一个自执行函数(接收的参数是上面被解析后的文件路径作为key,文件代码块作为值的一个对象)
+// 内部实现一下 __webpack__require 函数这种, fs输出写入到 输出文件中
+
+// 编写一个loader: loader就是导出了一个函数的js模块, 第一个参数就是 匹配test正则的 source code;
+// 函数内部 this 提供了 this.query(读取options参数), this.async()返回一个callback->用以处理loader内有异步的情况
+module.exports = function(sourceCode) {
+   console.log('sourceCode--->',sourceCode);
+   console.log('this.query--->',this.query);
+//   const callback = this.async();
+//   setTimeout(()=>{
+//      callback(null, sourceCode); // 第一个参数是err, 异步
+//   },1000);
+     return sourceCode; // 同步, 也可以 this.callback(null, sourceCode) 第一个参数是err, 指定多个参数返回
+}
+
+// 编写一个 plugin: 它是一个导出一个类的模块, 打包开始后,在一个特定的时机帮我们处理一些事,所以compiler webpack引擎有很多时间钩子
+class MyPlugin {
+    constructor(options) {
+        console.log('options--->', options);
+    }
+    apply(compiler) { //compiler参数是webpack的主要引擎,里面有很多时间节点钩子, 
+        // emit 这是一个异步钩子, 输出 asset 到 output 目录之前执行
+        compiler.hooks.emit.tapAsync('MyPlugin', (complication, cb)=>{ //compiler创建出本次打包的comlication实例
+            complication.assets['blabla.txt'] = {
+                source: () => {
+                    return 'If I rest, I rust.';
+                },
+                size: () => {
+                    return 1024*10
+                }
+            }
+            cb()
+        });
+    }
+}
+module.exports = MyPlugin;
+
+
+
+

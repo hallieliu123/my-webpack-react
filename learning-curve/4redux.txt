@@ -15,6 +15,8 @@ redux 它是一个状态管理的库，用来管理状态的
     connect函数: 1订阅组件的状态变化; 2第一个参数把state映射到props,第二个参数把dipatch映射到props上
 
     redux默认只支持同步(它的第二个参数是对象，里面每个对应的action函数都必须返回{type:''}，去派发action),不支持异步,异步就需要中间件的支持,redux-thunk;
+    修正: redux不是不支持异步，完全可以等异步结果返回再dispatch, 所以redux-thunk的作用实际是帮助隐藏了异步获取数据的逻辑，使得异步逻辑能够像同步一样，放到同一个action
+    文件中维护。
 
  1手写redux源码  v 
     

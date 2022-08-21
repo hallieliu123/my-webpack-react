@@ -68,7 +68,7 @@ export function bindActionCreator(creator,dipatch){
  *  logout: ()=>({type: ''})
  * }
  */
-export function bindActionCreators(creators, dipatch){  
+export function bindActionCreators(creators, dipatch){
     return Object.keys(creators).reduce((prev,cur)=>{ // [login, logout]
         prev[key] = bindActionCreator(creators[cur], dipatch)
         return prev;

@@ -48,19 +48,25 @@ export function applyMiddleware(...middlewares){
     }
 }
 
-function compose(...funcs){
-
-    return funcs.reduce((prev,cur)=>(...args)=>prev(cur(...args)));
+function compose(...funcs){ // [f1,f2,f3] -> (...args)=>f1(f2(f3(...args))) 
+    if(funcs.length===0) {
+        return (args) => args;
+    }
+    if(funcs.length===1) {
+        return funcs[0];
+    }
+    return funcs.reduce((prev,cur)=>(...args)=>cur(prev(...args)));// (args)=>fn2(fn1(args));   (dispatch)=>fn3(prev(dispatch))
 }
 
-
-
-
-const thunk = ({getState,dispatch}) => dispatch => action => {
-    if(typeof action == 'function'){
-        action(getState,dispatch);
+const thunk = ({getState,dispatch}) => {
+    return dispatch => {
+        return action => {
+            if(typeof action == 'function'){
+                action(getState,dispatch);
+            }
+            return dispatch(action);
+        }
     }
-    return dispatch(action);
 }
 
 

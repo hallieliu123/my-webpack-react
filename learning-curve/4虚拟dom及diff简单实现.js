@@ -255,7 +255,7 @@ function  patchChildren(
                                 find = true;
                                 patch(prevChildren[j], nextChildren[i], container);
                                 if(j<lastIndex){ // 要移位置
-                                    let refNode = nextChildren[i-1].el.nextSibling; 
+                                    let refNode = nextChildren[i-1].el.nextSibling;
                                     container.insertBefore(prevChildren[j].el,refNode);
                                 }else{ // 不需要移位置就记住上次查到的元素下标
                                     lastIndex = j;

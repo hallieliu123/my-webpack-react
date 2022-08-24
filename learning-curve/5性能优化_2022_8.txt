@@ -1,0 +1,233 @@
+
+// 性能优化
+// 1. 性能优化指标和优化目标 -- 只是个概览: 
+// 对于加载: 1理解加载瀑布图  2基于HAR保存性能信息  3lighthouse中的speed index小于4s优秀
+// 4其他测量指标: lighthouse中的: speed index, 首次渲染时间(从白屏到有任何内容的时候); network中的: TTFB(请求发出到响应的时间waterfall看到的), 页面加载时间(所有资源加载完成时间,瀑布图中绿线表示 dom 加载完成时间，红线表示 所有资源加载完成时间。), 
+// 对于响应: 1交互反馈要及时,一般要100ms就有反应为优秀  2FPS帧率-1s达到要60FPS为优秀   3异步请求完成时间-一般1s,超过可以做个加载动画
+
+// 2. RAIL测量模型 - google提出的量化性能的标准
+      所有指标都是从用户角度出发的:
+      response: 用户交互处理事件时间,一般为50ms(本来讲是100ms,因为有50ms是浏览器处理用户输入时间);
+      animation: 每10ms产生1帧(本来讲是1s60fps也就是16ms绘制1fps,其中浏览器绘制时间差不多要消耗6ms);
+      idle: 尽可能增加空闲时间,所以很多业务逻辑运算尽可能放在后端以增加浏览器空闲时间,这样用户交互才会快
+      load: 所有资源应在5s内加载解析渲染完成
+    // 性能测量工具
+        chrome dev tools 开发调试, 性能评测
+        lighthouse 网站整体性能质量评估
+        webpageTest 多测试地点, 全面性能报告
+    // webpageTest: 网址 webpagetest.org (也可以本地部署webpageTest工具,本地进行测试)
+       webpageTest 中的 waterfall 还包含了 空闲时间，用户可交互时间等信息
+       first view 第一次访问  报告
+       repeat view 第二次访问 报告
+    // lighthouse 生成一个完整的性能分析报告, 还会建议优化方案. 可以在chrome dev tool内使用,也可以npm install -g lighthouse 然后 lighthouse https://www.sephora.cn 生成报告
+    // chrome dev tools 中的性能分析工具:  比如说 performance 可以看到浏览器主线程的所有信息,可以看到我们代码中是否有耗时的函数; 
+                                        比如说 request blocking 功能, 可以block任意资源;
+                                        比如说 network 的throttling可以自定义带宽去进行性能分析
+    // 常用的性能测量APIs
+       比如说 用户多长时间可以开始交互:
+       window.addEventListener('load', evt=>{
+            const timing = performance.getEntriesByType('navigation')[0]; // 很多资源加载的信息都保存在navigation里
+            const timeToInteractive = timing.domInteractive - timing.fetchStart;
+            console.log('用户可以交互时间',timeToInteractive);
+       }); 
+       比如说 同过PerformaceObserver监听获取所有 long tasks 对象
+       const observer = new PerformaceObserver(list=>{
+         for(let entry of list.getEntries()) {
+            console.log('long task 对象',entry);
+         }
+       })
+       observer.observe({entryTypes: ['longtask']});
+       
+       比如说 用户如果已离开当前页面,一些在加载的资源比如视频可以停止了
+       判断用户是否停留在当前页面:
+       let vEvent = 'visibilitychange';
+       if(document.webkithidden != undefined) {
+            vEvent = 'webkitvisibilitychange';
+       }
+       document.addEventListener(vEvent,()=>{
+            if(document.hidden || document.webkitHidden) {
+                console.log('user left this page');
+            } else {
+                console.log('user come back to this page');
+            }
+       });
+
+       比如说 如果用户网络状态改变了 原本加载一些高清的图片可以换为加载一下不那么清楚的图片
+       const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+       const type = connection.effectiveType; // 获取当前网络状态
+       connection.addEventListener('change',()=>{
+            console.log(`connection type changed from ${type} to ${connection.effectiveType}`);
+       });
+    
+// 3.浏览器运行机制:进程、进程之间的通信、浏览器渲染原理
+   浏览器包括: 
+   browser主进程: 主要负责协调、控制其他进程,只有一个;还负责网络资源下载,页面关闭去关闭相应的进程,还负责控制页面的前进后退,
+                 还有将renderer渲染线程输出的结果绘制到页面。
+   第三方插件进程: 每种类型插件都对应一个,只有使用该插件时才会创建此进程;
+   GPU进程: 用于3D绘制,只有一个;
+   renderer渲染进程: 其中包括多个线程:
+                    js引擎线程: 负责解析运行js脚本, 需要注意的是 js引擎线程与GUI渲染线程是互斥的,当js引擎线程运行时,GUI渲染线程会被挂起,所以如果js
+                               运行时间过长就会导致页面渲染阻塞。
+                    GUI渲染线程: 负责解析html,css,构建dom树,cssdom和renderObject树,布局(layout)、绘制(paint); 还有当页面需要重绘(repaint)
+                                或某个操作触发回流(reflow)时GUI渲染线程都要工作;注意GUI渲染线程与js引擎线程是互斥的;
+                    事件触发线程: 负责处理事件触发(包括用户点击事件或是webAPIs触发的事件等),将对应的回调函数方式任务队列,等待js引擎线程执行;
+                    异步http请求线程: 每发送一个http请求就会开启一个此线程,当检测到状态变更时,将对应回调函数放入任务队列,等待js引擎线程执行;
+                    定时触发器线程: 负责如setInterval,setTimeout等的计时,计时完毕将对应回调放入任务队列,等待js引擎线程执行;
+    进程之间的通信: 1首先browser主进程收到用户请求,开始获取页面内容下载网络资源,然后将任务通过renderhost接口传递给renderer渲染进程;
+                  2渲染进程收到信息后开始渲染,同时可能需要browser主线程去加载资源和GPU线程进行辅助渲染,最后得到renderObject树
+                  3渲染进程将结果传给browser主进程,主进程负责绘制
+    浏览器渲染原理: GUI渲染线程 
+                 1解析 html 生成 dom 对象,解析 style 生成 cssom对象
+                 2构成render tree
+                 3然后根据各元素大小位置进行布局layout,布局是关注的元素的几何信息
+                 4然后paint绘制,
+                 5最后复合composite(进行文档流的分层等)
+    如果有dom样式更改: js操作dom -> style -> layout -> paint -> composite; 基于此完全有办法可以绕过layout回流和paint重绘,只走复合进行性能优化
+                    
+// 回流与重绘, 页面抖动layout thrashing 及 如何避免 layout thrashing
+   回流reflow: 回流是相对layout说的, 关注的是元素的几何信息,如 大小, 位置, display: none, 增加/删除元素, 修改字体大小 等;
+   重绘repaint: 对于元素外观的改变,比如背景颜色的变化这类需要重新绘制;
+
+   避免回流和重绘而只去复合: 可以使用transform, opcacity 这些属性去做动画或改变位置等, 并且为元素添加 will-change:transform属性告诉浏览器将此
+                         元素拆出一个图层,这样就只会有复合过程而不会有reflow或repaint了
+
+   页面抖动layout thrashing: 回流就有可能导致页面抖动,实际浏览器会自动对我们进行元素布局写入的操作推迟进行批量处理,除非我们同时获取关于布局的信
+                         息(比如offsetTop),那么浏览器就会立即执行重新布局。
+                      避免: 1尽可能避免回流    2对于布局的操作,要读写分离   3防止页面抖动可以使用fastdom工具库
+    复合线程(GPU进程的线程)与图层layers: 
+           复合线程负责将一些对布局影响比较大的元素拆出为独立的图层,最后将这些图层复合在一起;
+           像一些属性transform; opacity 等使用这些属性的元素会被拆除一个图层,因此不会触发回流,只会触发复合
+           chrome dev tools中performance中可以录制一些行为查看是否触发回流重绘;
+
+// 高频事件防抖动或卡顿: 当1fps不能再16毫秒内完成时就会出现,像一些时间比如onmousemove,onpointermove等在1fps绘制时事件被触发多次,这样就会出现卡顿;
+        优化: window.requestAnimationFrame(()=>{}); 下次重绘之前调用回调函数更新动画; 
+        它是会在layout和paint之前被调用的所以提高了更新效率,并且它是由js进行调度的所以能确保在每一次绘制之前调用这个函数;
+        const changeWidth = () => {
+            // animation 
+        };
+        let tick = false; // 确保上一帧绘制完成再出发动画更新;
+        window.addEventListener('mousemove', ()=>{
+            if(tick) return;
+            tick = true;
+            window.requestAnimationFrame(()=>{
+                changeWidth();
+                tick = false;
+            });
+        });
+
+// 插一个: DOMContentLoaded 与 onload 哪个事件先触发
+          DOMContentLoaded: dom加载完成时触发,不包括样式表,图片,js脚本这些;
+          onload: dom,样式表,图片,js脚本都加载完才触发;
+
+
+
+// 4代码优化
+    V8引擎工作原理: js代码 -> parse it -> 抽象语法树(abstract syntax tree) -> interpreter(也可能不去进行优化直接->bytecode) 
+                -> optimizing compiler(如果在执行过程中发现做的优化不合适会有一个反优化过程反而会降低运行效率) -> machine code机器码 -> bytecode字节码
+        所以我们的代码要尽量避免出现反优化过程的出现;
+        举例: 使用node中的v8引擎:
+        const {performace, PerformaceObserver} = require('perf_hooks'); 
+        const add = (a, b) => a + b;
+        const num1 = 1;
+        const num2 = 2;
+        performace.mark('start');
+        for(let i=0; i<100000; i++) {
+            add(num1, num2);
+        }
+        add(num1, 'string');
+        for(let i=0; i<100000; i++) {
+            add(num1, num2);
+        }
+        performace.mark('end');
+        const observer = new PerformaceObserver((list)=>{
+            console.log(list.getEntries()[0]);
+        });
+        observer.observe({entryTypes: ['measure']});
+        performace.measure('测量1', 'start', 'end');
+        v8优化机制:
+             脚本流: 当资源下载达到30kb的时候,v8开始边解析这30kb边下载剩余的了
+             字节码缓存: 源码被解释为字节码后发现一些片段有其他页面也用到,那么就把这些片段缓存起来
+             懒解析: 对于函数而言,声明了不去解析,用到时才去解析
+    函数优化: 懒解析lazy parsing vs 饥饿解析 eager parsing;
+             如果声明了一个函数并且随后立即调用,它会先进性懒解析,然后再进行饥饿解析,这样反而耗费了更多时间.
+             const add = ((a, b) => a+b); // 给函数加上括号直接进行饥饿解析
+             const num1 = 1;
+             const num2 = 2;
+             add(num1, num2);
+    对象优化: 这里只讲 5 个点:
+            1尽量保证对象属性初始化顺序:
+                class RectArea {  // 实例化时创建: hidden class 0
+                    constructor(l, w){
+                        this.l = l; // 实例化时创建: hidden class 1
+                        this.w = w; // 实例化时创建: hidden class 2
+                    }
+                }
+                const r1 = new RectArea(1, 2);
+                const r2 = new RectArea(3, 4); // 对象属性顺序一致会复用原先创建的hidden class
+                // 若使用:
+                const obj1 = {a: 1}; // hidden class 0
+                obj1.b = 2; // hidden class 1
+
+                const obj2 = {a: 1}; // hidden class 2
+                obj2.b = 2; // hidden class 3
+                // 不会去复用 已有的hidden class;
+            2尽量不要声明一个对象后去追加属性,因为
+            const obj3 = {a: 1}; // 这个属性是 in-object属性
+            obj3.b = 2;   // 而这个属性是 normal 属性, 它存储在property store中, 如果查找需要通过一个描述数组间接查找, 速度会慢; 
+
+            3尽量使用array代替array-like;
+            Array.prototype.forEach.call(arraylike, (item, index)=>{
+                // 遍历
+            }); // 这种方式速度较慢
+            // 甚至先将 array-like 转换为 array 再进行遍历速度也比第1种方式快6倍
+
+            4避免读取超过数组长度
+            const getVal = (arr) => {
+                for(let i=0;i<=arr.length;i++) { // 读取超过数组长度,会出现 undefined与100进行比较, 还会出现沿原型链的查找 这些都会影响性能
+                    if(arr[i] > 100) {
+                        console.log(arr[i]);
+                    }
+                }
+            }
+
+            5尽量避免元素类型的转换, 比如
+            const arr = [1, 2, 3]; // 每个元素都是整型,那么解析优化时会给这个数组定义为 PACKED_SMI_ELEMENTS 类型
+            arr.push(2.1); // 如果追加一个浮点数, 则类型会被更改为 PACKED_DOUBLE_ELEMENTS, 对原来做的优化就费了
+        HTML优化: 没有太多可以说的
+                 减少iframes的使用
+                 压缩空白符
+                 避免使用table布局
+                 避免深层级dom节点嵌套
+                 css&js尽量外链
+        CSS优化: 
+                降低CSS对渲染的阻塞,比如减小css大小只加载首屏渲染所必须的,不必须的可以延迟加载;
+                利用GPU进程优化动画
+                使用contain:layout;属性告诉浏览器这个元素内部的所有变化不会影响其他元素,避免大范围的回流与重绘;
+                使用font-display属性
+//5资源优化
+   资源的压缩与合并: html,css,js
+   图片优化:  
+
+
+            
+
+
+
+
+
+
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+

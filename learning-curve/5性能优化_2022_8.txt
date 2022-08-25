@@ -62,9 +62,9 @@
 // 3.浏览器运行机制:进程、进程之间的通信、浏览器渲染原理
    浏览器包括: 
    browser主进程: 主要负责协调、控制其他进程,只有一个;还负责网络资源下载,页面关闭去关闭相应的进程,还负责控制页面的前进后退,
-                 还有将renderer渲染线程输出的结果绘制到页面。
+                 还有将renderer渲染进程输出的结果绘制到页面。
    第三方插件进程: 每种类型插件都对应一个,只有使用该插件时才会创建此进程;
-   GPU进程: 用于3D绘制,只有一个;
+   GPU进程: 用于3D绘制, 只有一个;
    renderer渲染进程: 其中包括多个线程:
                     js引擎线程: 负责解析运行js脚本, 需要注意的是 js引擎线程与GUI渲染线程是互斥的,当js引擎线程运行时,GUI渲染线程会被挂起,所以如果js
                                运行时间过长就会导致页面渲染阻塞。
@@ -74,7 +74,7 @@
                     异步http请求线程: 每发送一个http请求就会开启一个此线程,当检测到状态变更时,将对应回调函数放入任务队列,等待js引擎线程执行;
                     定时触发器线程: 负责如setInterval,setTimeout等的计时,计时完毕将对应回调放入任务队列,等待js引擎线程执行;
     进程之间的通信: 1首先browser主进程收到用户请求,开始获取页面内容下载网络资源,然后将任务通过renderhost接口传递给renderer渲染进程;
-                  2渲染进程收到信息后开始渲染,同时可能需要browser主线程去加载资源和GPU线程进行辅助渲染,最后得到renderObject树
+                  2渲染进程收到信息后开始渲染,同时可能需要browser主进程去加载资源和GPU线程进行辅助渲染,最后得到renderObject树
                   3渲染进程将结果传给browser主进程,主进程负责绘制
     浏览器渲染原理: GUI渲染线程 
                  1解析 html 生成 dom 对象,解析 style 生成 cssom对象
@@ -93,7 +93,12 @@
 
    页面抖动layout thrashing: 回流就有可能导致页面抖动,实际浏览器会自动对我们进行元素布局写入的操作推迟进行批量处理,除非我们同时获取关于布局的信
                          息(比如offsetTop),那么浏览器就会立即执行重新布局。
-                      避免: 1尽可能避免回流    2对于布局的操作,要读写分离   3防止页面抖动可以使用fastdom工具库
+            如何减少回流/重绘:
+            1减少逐项更改样式，最好一次性更改style，或是将更改的样式定义在class中并一次性更新
+            2避免循环操作DOM，而是新建一个节点，在他上面应用所有DOM操作，然后再将他接入到DOM中
+            3动画效果使用绝对定位或固定定位，使他脱离文档流，否则回流代价很高
+            4避免重复获取会引发回流或重绘的属性,如当要频繁得到如offset属性时，只读取一次然后赋值给变量，而不是每次都获取一次
+            5使用硬件加速创建一个新的复合图层，当其需要回流时不会影响原始复合图层回流
     复合线程(GPU进程的线程)与图层layers: 
            复合线程负责将一些对布局影响比较大的元素拆出为独立的图层,最后将这些图层复合在一起;
            像一些属性transform; opacity 等使用这些属性的元素会被拆除一个图层,因此不会触发回流,只会触发复合
@@ -203,13 +208,127 @@
                 降低CSS对渲染的阻塞,比如减小css大小只加载首屏渲染所必须的,不必须的可以延迟加载;
                 利用GPU进程优化动画
                 使用contain:layout;属性告诉浏览器这个元素内部的所有变化不会影响其他元素,避免大范围的回流与重绘;
-                使用font-display属性
+                使用font-display属性: auto;
+                        v fallback; 100ms内不显示字体,100ms后字体还没加载完就使用浏览器默认字体,直到字体下载完毕再替换;
+                        v optional; 100ms内不显示字体,100ms下载完就替换字体,没下载完就使用默认字体,即使后面字体下载完也不再替换;
+                        block; 3s内不显示字体,3s后字体还没加载完就使用浏览器默认字体,直到字体下载完毕再替换;
+                        swap; 直接使用浏览器默认字体,直到字体下载完毕替换;
+                               
 //5资源优化
    资源的压缩与合并: html,css,js
-   图片优化:  
+   图片优化: 
+           各种图片格式比较: jpg/jpeg: 优: 压缩比很高,但又能保持很好的画质; 缺: 因为压缩比高边缘和线条会表现的粗糙,所以不适合图标;
+                           png: 优: 透明图片,对图片边缘和线条都表现较好   缺: 提价就会比较大,所以适合一些小的图标和logo这种;
+   图片加载优化: 图片懒加载:
+               const lazyload = () => {
+                    start = 0;
+                    return () => {
+                        const imgs = document.getElementByClassName('lazy_load_img');
+                        const doc = document.documentElement || document.body;
+                        for(let i=start; i<imgs.length; i++) {
+                            if(imgs[i].offsetTop <= doc.scrollTop + doc.clientHeight) {
+                                const src = imgs[i].getAttribute('data-src');
+                                imgs[i].src = src;
+                                start = i;
+                            }
+                        }
+                    }
+               };
+               图片响应式: <img src="" sizes="50vw" srcset="1.jpg 100w, 2.jpg 400w, 3.jpg 800w, 4.jpg 1000w " />
+               vw: 相对于视口的宽度; 1vw就是视口宽度的1%;
+               sizes="50vw" 就是图片宽度是视口宽度的50%;
+               srcset: 结合sizes属性使用, 当屏幕为多少像素时下载并使用对应的图片;
+//6webpack优化配置  见单独的 1webpack_note_2022_7.txt
+   webpack监测和分析工具: webpack chart : 本地运行: webpack --profile --json > stats.json 生成信息文件
+                        -> 上传至 alexkuz.github.io/webpack-chart 生成可视化信息图
+
+                    source-map-explorer 工具基于webpack的soucemap去进行监测和分析 -> 会有体积占比信息
+
+                    speed-measure-webpack-plugin 查看webpack插件和loader使用速度
+                    
+//7传输加载优化
+    Gzip: 对传输资源进行压缩; 配置nginx启用Gzip;
+    connection: keep-alive; 建立持久的TCP链接; 
+                nginx默认开启, 从waterfall中可以看到网站第一个请求initial connection的时间, 其余请求都没有这个时间了
+    HTTP资源缓存: 
+        1.强缓存: 
+            cache-control: 'max-age=seconds'    或者     expires 7d; 
+        2.协商缓存:
+            cache-control: 'private must-revalidate no-cache'; 或者 cache-control: 'max-age=seconds'过期了
+            etag: '校验串';
+            last-modified: '时间';
 
 
-            
+            if-none-match: 'etag的校验串'; // 200, 304
+            if-modified-since: '时间'; //200, 304
+        3.http2: 
+                1.http2 实现了多路复用, http1虽然可以使用keep-alive复用同一个tcp链接, 但是资源下载还是有顺序的会有阻塞的问题, 而http2多路复用
+                 做到了资源并发的请求和传输;
+                2.http1时都是文本传输,http2是二进制传输效率更高
+                3.http2实现了server push服务端推送;这样直接省去了ttfb的时间,服务端直接将资源推送到客户端,使用的时候直接用就可以了;
+//8前沿优化解决方案:
+     1.使用flexbox优化布局,比float性能好; display: flex;
+     2.优化资源加载顺序,给资源设置preload/prefetch; 图片,css,js都可以: <link rel="preload" href="xxx.js" />
+        preload: 优先加载此资源,可以从chrome dev tool中看到,加载顺序直接提前了;
+        prefetch: 当浏览器空闲时加载此资源,最后加载此资源(此资源可能当前页面用不到,从用到的页面可以看到资源来自prefecth cache);
+     3.使用react-snap进行预渲染,它的原理是在build时就会启动一个headless chrome浏览器去访问每一个页面生成每个页面的 html; 没有服务端参与;
+       ssr主要问题: 配置复杂,并且是牺牲了TTFB的时间来补救首屏渲染;
+    
+
+// 1. 浏览器运行机制是怎样的?也就是说当用户在地址栏输入文本回车后发生了什么?
+// 2. 怎么做的首屏优化?
+       first contentful paint 2s以内为优秀, largest contentful paint 2.5s以内为优秀
+       time to interactive 3.8s以内为优秀
+       资源优化: 资源压缩,代码拆分,tree shaking,图片优化等
+       传输优化: 设置缓存,http2,静态资源放到CDN上去
+       调整资源加载顺序: preload, prefetch
+
+// 3. js怎样进行内存管理的？什么情况下会造成内存泄漏 ?
+      
+      
+
+
+
+
+    /*****************************************************************************************************************
+    1.强缓存： 不会向服务器发送请求,直接从缓存中读取资源,在chrome控制台的network选项中可以看到该请求返回200的状态码;
+    Expires:'国际标准时间' / Cache-Control：‘public/private/no-store/no-cache’;
+        Expires: 指明当前资源有效期
+            属于 http 1.0, 设置的是服务器端的时间，如果服务器端与客户端时间存在很大差异，则误差会很大，所以在http1.1中出现cache-control：‘max-age=秒’
+            如果两个都出现cache-control优先级更高
+        Cache-control:Cache-Control与Expires作用一致，指明当前资源的有效。只不过Cache-Control的选择更多，设置更细致
+            public: 可被代理服务器和浏览器缓存；
+            private: 只可被浏览器缓存
+            no-store: 完全不缓存,代理服务器都不行(比如service worker)
+            no-cache: 并不是字面意思的不缓存，而是走协商缓存，即每次请求都发送给服务端，请求头中携带if-modified-since：‘’或者 if-none-match：‘’来让服务器
+            对比看资源有无改变，有改变则返回200,将数据重新发送给客户端，如果没有改变则返回304，告诉客户端使用缓存，不会重新发送数据；
+    2.协商缓存: 向服务器发送请求，服务器会根据这个请求的request header的一些参数来判断是否命中协商缓存，如果命中，则返回304状态码并带上新的response header通知浏览器从缓存中读取资源；
+        走协商缓存有两个纬度：1.Cache-Control: 'no-cache'则每次请求都会走协商缓存的流程   2.cache-control:'max-age=秒'缓存到期了，请求头会带着if-modified-since/if-none-match字段去请求服务端进行对比
+        1. Last-modified / If-Modified-Since
+            Last-modified: 响应头中设置的上次文件被修改时间
+            If-Modified-Since: 如果上次请求中有响应头中有last-modified，再去请求时头中会带上if-moified-since字段，服务端去对比，返回200还是304
+        2. Etag  / if-None-Match
+            Etag: web服务器响应请求时，告诉浏览器当前资源在服务器的唯一标识（生成规则由服务器决定）。
+            If-None-Match: 当资源过期时（使用Cache-Control标识的max-age），发现资源具有Etag声明，则再次向web服务器请求时带上头If-None-Match （Etag的值）。
+                           web服务器收到请求后发现有头If-None-Match 则与被请求资源的相应校验串进行比对，决定返回200或304。
+
+        3.为什么既有last-modified还有Etag ？？?
+            Etag是服务器自动生成或者由开发者生成的对应资源在服务器端的唯一标识符，能够更加准确的控制缓存。Last-Modified与ETag一起使用时，服务器会优先验证ETag。
+            HTTP1.1中Etag的出现主要是为了解决几个Last-Modified比较难解决的问题:
+                **如果某些文件会被定期生成，当有时内容并没有任何变化，但Last-Modified却改变了，导致文件没法使用缓存
+                Last-Modified标注的最后修改只能精确到秒级，如果某些文件在1秒钟以内，被修改多次的话，它将不能准确标注文件的修改时间
+                有可能存在服务器没有准确获取文件修改时间，或者与代理服务器时间不一致等情形
+      /*****************************************************************************************************************
+
+        
+
+    
+        
+                    
+   
+
+    
+               
 
 
 

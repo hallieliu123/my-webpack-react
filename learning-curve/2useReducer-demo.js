@@ -35,8 +35,10 @@ function AddFruit({add}){
 }
 
 function componentName() {
+    // 所以这不是专业的写法
     let [fruit,setFruit] = useReducer(fruitReducer,'');
     let [fruits,setFruits] = useReducer(fruitReducer,[]);
+
     useEffect(()=>{  // 组件初始化时就会执行一次副作用操作
         console.log('fruit');
         setTimeout(()=>{
@@ -52,13 +54,45 @@ function componentName() {
         </div>
     )
 }
+function reFruitReducer(state, action) {
+    switch( action.type ){
+        case 'add':
+            return {
+                ...state,
+                fruits: [
+                    ...state.fruits,
+                    ...action.value
+                ]
+            };
+            case 'select':
+            return {
+                ...state,
+                fruit: action.value
+            }
+        default:  
+            return state;
+    }
+}
+const initialState = {fruit: '', fruits: []};
+function ReComponentName() {  // 没有做测试, 但这种写法才更贴合useReducer的用法
+    let [state,dispatch] = useReducer(reFruitReducer, initialState);
+
+    useEffect(()=>{  // 组件初始化时就会执行一次副作用操作
+        console.log('fruit');
+        setTimeout(()=>{
+            dispatch({ type: 'add',value: ['香蕉','苹果','西瓜','菠萝'] });
+        },3000);  
+    },[]); // 副作用依赖项,只要依赖改变就会执行副作用操作
+    
+    return (
+        <div>
+            <AddFruit add={ (name)=>dispatch({ type: 'add',value: [name] }) } />
+            <div>{ state.fruit ? `您选择了: ${ state.fruit }` : `请选择您喜欢的水果: ` }</div>
+            <FruitsList fruits={ state.fruits } selectFruit={ (fruit)=>dispatch({ type: 'select',value: fruit }) } />
+        </div>
+    )
+}
 
 export default componentName
-
-
-
-
-
-
 
 

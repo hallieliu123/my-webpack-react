@@ -19,9 +19,9 @@ class Home extends Component {
         console.log('click setState', this.state.counter); // 0, 以上也会被合并执行
     }
     componentDidMount() {
-        this.myTimer = setInterval(()=>{
-            this.setState({time: new Date().toLocaleTimeString()});
-        }, 1000);
+        // this.myTimer = setInterval(()=>{
+        //     this.setState({time: new Date().toLocaleTimeString()});
+        // }, 1000);
         
         // this.setState({ counter: this.state.counter + 1}, ()=>{ console.log('setState 1',this.state.counter);}); // 1
         // this.setState({ counter: this.state.counter + 1}, ()=>{ console.log('setState 2',this.state.counter);}); // 1
@@ -37,15 +37,27 @@ class Home extends Component {
         //     console.log('setTimeout-->', this.state.counter); // 3
         // });
 
+        
+        setTimeout(()=>{
+            this.setState({counter: this.state.counter + 1}, ()=>{
+                console.log('callback...');
+            });
+            console.log('setTimeout');
+        },0);
     }
-    componentWillUnmount() {
-        this.myTimer && clearInterval(this.myTimer);
+    componentDidUpdate() {
+        console.log('did update...');
     }
+    // componentWillUnmount() {
+        // this.myTimer && clearInterval(this.myTimer);
+    // }
     render() {
+        console.log('render...');
         return (
             <div onClick={this.test}>
                 <h1> HOME </h1>
                 {this.state.time}
+                <p>counter: {this.state.counter}</p>
             </div>
         )
     }

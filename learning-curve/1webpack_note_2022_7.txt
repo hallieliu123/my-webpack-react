@@ -1,7 +1,7 @@
 // 什么是 webpack: 是模块打包工具, 将js模块和一些其他浏览器不支持的模块,打包编译可在浏览器运行的语言。
    webpack-cli 是一个用来在命令行运行webpack的工具。
 
-// webpack -v 指向全局的 webpack-cli, 可以使用 npx webpack -v 或者 ./node_modules/.bin/webpck -v 查看local webpack 安装信息
+// webpack -v 指向全局的 webpack-cli, 可以使用 npx webpack -v 或者 ./node_modules/.bin/webpack -v 查看local webpack 安装信息
 
 // npm info webpack 查看webpack历史版本信息
 
@@ -60,14 +60,14 @@
       }
    },
    generator: {
-      filename: 'images/[name][ext]' // 一定要相对路径, 将图片放入 output.path下的这个路径
+      filename: 'images/[name].[ext]' // 一定要相对路径, 将图片放入 output.path下的这个路径
    }
 }
 {
    test: /\.(woff|woff2|svg|eot)$/,
    type: 'asset/resource', // 行为和file-loader一致, 修改引用图片或字体名称, 将资源输入到指定路径
    generator: {
-      filename: 'fonts/[name][ext]'// 一定是相对路径
+      filename: 'fonts/[name].[ext]'// 一定是相对路径
    }
 }
 
@@ -288,6 +288,12 @@ sideEffects: ['*.css']
 // import('按需加载 | 并行加载', './模块') 可将 按需加载 和 并行加载
 // 按需加载 webpackPrefectch: true, 父模块加载完,浏览器空闲时加载此模块, 会自动生成一个<link rel='prefetch' href='模块'/> 标签并追加到页面头部
 // 并行加载 webpackPreload: true, 与父模块并行加载, 使用不当会造成性能损耗,会自动生成一个<link rel='preload' href='模块'/> 标签并追加到页面头部
+// !!! 注意啊 !!! 必须和React.lazy(()=>import(''))这样使用啊,否则加载的是一个module,不能去用作组件啊
+   React中有<Suspense fallback={<div>Loadding</div>}></Suspense>这个组件,在组件未加载完时fallback显示一个组件(UI)
+
+
+
+
 
 
 // assets-webpack-plugin 将打包出的文件名称及其路径抽离到一个json文件中, ssr时可以用。

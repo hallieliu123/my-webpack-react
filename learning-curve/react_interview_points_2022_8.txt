@@ -1,0 +1,251 @@
+
+// 1. react 中class组件为什么要 bind this ?
+      react 在解析jsx语法绑定事件时,自动解除了this的指向;
+// 2. react 中的 event 事件 与 原生 event 事件区别 ?
+      react 中的event事件是synthetic(合成的,人造的) Event 与原生event事件不同; 并且react17版本之前所有事件都是绑定在document上;
+      event.target 和 event.currentTarget 指向事件源即当前元素
+      event.nativeEvent 才是真正的 MouseEvent;
+      event.nativeEvent.currentTarget 指向 document
+    为什么react要去封装一个syntheticEvent而且全部绑定到document上,而不是直接使用原生 MouseEvent ？
+      更好的兼容性与跨平台;
+      绑定到document上,避免频繁解绑,减少内存消耗; div事件源 -> 冒泡到document -> syntheticEvent -> 各种handler回调函数
+      方便事件的统一管理(如事务机制)
+
+      react17之后所有事件都绑定在了root dom节点上,这样有利于多个react版本并存,如微前端;
+
+
+// 3. react 中父子组件通信 及 什么是状态提升 ?
+
+// 4. setState更新state要使用不可变值, 为什么 ?
+      eg:
+      const list1 = [1,2,3,4];
+      const list2 = [1,2,3,4];
+      const productDetails = {};
+      const userInfo = {};
+      this.setState({
+        list1: list1.concat([5]), // 而不能使用 list1.push(5);
+        list2: [...this.state.list2, 5], // 而不能使用 list1.push(5);
+        productDetails: {...this.state.productDetails, price: 56},
+        userInfo: Object.assign({}, this.state.productDetails),
+      });
+    为什么还没有解答: 这涉及到React的设计理念
+    比如说你使用的 PureComponent, 它内部会自动做一个props或state的浅比较,如果值是可变的,那么你这个组件就永远不会更新;
+
+
+    setState是同步还是异步 ? /**本节讲解仅限于 react版本 <=17 */
+    1直接使用this.setState({count: this.state.count+1});
+            console.log(this.state.count);  // 这是异步的
+    2在setTimeout({
+        this.setState({count: this.state.count+1});
+        console.log(this.state.count);  // 这是同步的
+    },0);
+    或者在: componentDidMount(){ // 中自定义事件中也是同步的
+        this.setState({count: this.state.count+1});
+        console.log(this.state.count);  // 这是同步的
+    }
+
+    setState可能会合并 ?
+    以下3次setState实际只执行一次,setState行为被合并了,因为setState这里是异步的导致每次取this.state.count还是原来的值 0, 像 Object.assign({count: 1}, {count: 1}, {count: 1});
+    this.state = {count: 0};
+    this.setState({count: this.state.count+1}); // 0 + 1
+    this.setState({count: this.state.count+1}); // 0 + 1
+    this.setState({count: this.state.count+1}); // 0 + 1
+    所以最后渲染count是 1
+
+    当setState传入的是函数的时候就会直接同步更新
+    this.state = {count: 0};
+    this.setState((state, props) => {
+        return {count: state.count + 1}
+    });
+    this.setState((state, props) => {
+        return {count: state.count + 1}
+    });
+    this.setState((state, props) => {
+        return {count: state.count + 1}
+    });
+    所以最后渲染count是 3
+  
+   总结: react组件事件中 setState 是异步的,并且会合并state进行批处理
+        在setTimeout和自绑定的事件中是同步的,不会合并state进行批处理
+
+    React 18版本后, setState(包括hooks) 所有setState都是异步,并且会合并state进行批处理;
+
+//5. class组件与function组件有什么区别,毕竟现在都有hooks了 ?
+
+    class组件设计思想是基于面向对象思想,有继承,需要实例化; （Object oriented pragramming）
+    function组件设计思想基于函数式编程思想,有相同的输入必定会有相同的输出;  (function oriented pragramming)
+
+    对于实现一个业务逻辑来说 clas组件生命周期内经常包含不相关的业务逻辑,而又把相关的逻辑拆分到几个不同的生命周期内;
+                         function组件Hook允许我们按照逻辑分离它们;
+
+    插1个考点: 什么是函数式编程 ？
+
+//6. 受控组件 与 非受控组件 使用场景;
+     受控组件 <input value={this.state.value} onChange={this.handleChange}/> //this.handleChange内更新state
+
+     非受控组件: 必须操作dom,不能使用state获取值的时候:
+        constructor 内先要声明: this.fileRef = React.createRef();
+        <input type='file' ref={this.fileRef} />
+        点击上传文件获取这个文件:
+        const fileDom = this.fileRef.current; // 获取dom节点
+        console.log(fileDom.file[0]); // 获取到要上传的文件
+
+//7. ReactDOM.createPortal(<div class='modal'>{this.props.children}</div>, document.body);
+     使用场景: 比如说popup或者modal最好放在body下的第一层;
+              比如说父组件z-index值太小了; 
+
+
+//8. react如何异步加载组件
+    React.lazy(()=>import('./模块'));
+    <Suspense fallback={component}>{lazyLoad Components}</Suspense>
+
+
+//9. react中的性能优化,必考 ！！！
+     shouldComponentUpdate(nextProps, nextState) {
+        if(this.state.count !== nextState.count || this.props.length !== nextProps.length) {
+            return true;
+        }
+        return false;
+     }
+     为什么要用这个钩子呢 ?
+     因为react中 父组件的更新一定会导致子组件的更新; 有些情况父组件更新了,子组件实际不需要更新,这是使用这个钩子;
+     
+     什么时候去使用这个钩子呢 ?
+     并不是所有的可以使用这个钩子的组件都必须要使用,当需要是再用就可以,比如说事件触发计算量很大更新过多导致卡顿这种;
+     SCU state必须使用 不可变值:
+     shouldComponentUpdate(nextProps, nextState) {
+        if(_.isEaqual(this.state.list, nextState.list)) { // 如果state不是不可变值如：this.state.list.push({userInfo: '123'});然后再this.setState({list: this.state.list});
+            return false;                                 // 这个组件就不会更新了 !!!
+        }
+        return true;
+     }
+
+//10.PureComponent 和 React.memo
+    PureComponent相当于在普通组件中自动加了shouldComponentUpdate(SCU){
+        // 这里自动进行了浅比较(不能去做深比较,很耗费性能)
+    }
+
+    对于函数组件来说用:
+    React.memo(function MyComponent(){}); // React.memo是一个高阶组件,内部做了一个对props的浅比较;如果MyComponent内部的状态变化仍渲染;
+
+//11.React中实现公共逻辑抽离; 使用 HOC 或 render props
+
+//12.React的 setState 和 batchUpdate 机制: --- react17版本及之前
+    当this.setState({})之后,newState会被存入一个pending队列,然后判断是否处于isBatchingUpdates状态, yes就会 保存组件于dirtyComponents中 - 异步更新, 
+    no就会遍历所有dirtyComponents,调用updateComponents更新pending states 或 props - 同步更新;
+    所以讲this.setState({})是同步还是异步要看设置setState()时是否命中isBatchingUpdate, React可以管理到的入口: 非自定义的react事件,
+    生命周期中的setState()都会命中所以是异步, 而像自定义的绑定的事件和setTimeout,setInterval中不会命中;
+
+
+    react-fiber如果优化性能: 这里只是浅显讲下原理,不深究了
+    为什么要有react-fiber:
+    js引擎线程和GUI渲染线程是互斥的; 当组件很复杂,组件更新和渲染压力很大, 如果再有dom操作比如动画,鼠标拖拽等,可能会引起卡顿;
+    浅浅写下原理: 
+    对于 react 中在进行patch的时候分为两个阶段: 
+        1reconciliation阶段(diff算法计算,纯js计算) 
+        2commit阶段(主要就是dom更新)
+    react-fiber将reconciliation阶段进行任务拆分,拆成一个个子任务,当dom渲染时就暂停执行子任务,空闲时恢复执行;怎样判断是否空闲呢,有个
+    api叫做window.requestIdleCallback可以判断, 有的浏览器不支持这个api fiber机制就不用了
+
+//13.react hooks相关: 
+    为什么会用 hooks ？
+        函数组件的特点:
+            不会被实例化
+            没有生命周期
+            没有state不能进行setState
+        class组件的问题: 
+            业务复杂时同一个逻辑要分散在不同生命周期方法中
+            复用逻辑复杂, 像HOC和render props
+        
+        react提倡函数式编程,函数式组件更灵活易拆分,但太简单了就需要增强就有了 -- hooks
+
+    react hooks 怎样模拟组件生命周期 ？
+        useEffect(()=>{},[]);  ComponentDidMount
+        useEffect(()=>{}, [count]); ComponentDidMount; ComponentDidUpdate
+        useEffect(()=>{
+            return () => { // ComponentWillUnmount
+            }
+        },[count]);
+
+    useEffect让纯函数有了副作用, 默认情况下纯函数有相同的输入就会有相同的输出,不会对函数之外造成任何影响,没有任何副作用,但因为
+    业务需要组件必须要有副作用,所以就需要useEffect将副作用'钩'到纯函数中;
+
+    useEffect(()=>{return ()=>{}})的第二个参数没有的情况下,返回的fn执行每次更新都会执行一次清除上一次的操作;卸载时也执行fn
+    是[]情况下,只在组件卸载时执行返回的fn
+    是[a, b]情况下,依赖有更新时返回的fn执行每次更新都会执行一次清除上一次的操作;卸载时也执行fn
+
+
+    useReducer 与 redux 的区别 ?
+        useReducer是useState的代替方案,用于state的复杂变化
+        useReducer还是单个组件的状态管理,组件通讯还是需要props
+        redux是全局的状态管理,多组件数据是共享
+    
+    使用useMemo进行性能优化:
+       react中父组件有更新,传递给子组件的props没有改变但子组件也会更新; 在class组件中我们使用的是 PureComponent 或生命周期 shouldComponentUpate去
+       做优化看是否子组件需要更新; 使用Hooks可以使用memo方法将子组件包裹,并且在父组件中使用 useMemo(()=>{return {子组件的props}}, [依赖改变再更新])来
+       包裹传给子组件的props; class components 和 useMemo 优化原理是相同的,都是通过对props的浅层对比实现的。
+       
+       useCallback(()=>{}, []);
+
+       useMemo用来缓存数据,useCallback用来缓存函数
+
+    useRef的使用：1/ 获取dom节点    2/ 保证组件re-render时,保存的数据还存在
+    const testRef = () => {
+        const [count, setCount] = useState(0);
+        const myTimer = useRef();
+       useEffect(() => {
+            myTimer.current = setInterval(()=>{
+                // change state...
+                setCount(count=>count+1); // 传入函数可以每次获取最新的 count state;
+            }, 3000);
+        }, []);
+        const stop = () => {
+            clearInterval(myTimer.current);
+        }
+
+        return <div>
+            <p>count: {count}</p>
+            <button onClick={stop}>stop</button>
+        </div>
+    }
+
+    // 阻止在已卸载组件中改变state
+    // const useMountedRef = () => {
+    //     const mountedRef = useRef(false);
+    //     useEffect(()=>{
+    //         mountedRef.current = true;
+    //         return () => {
+    //             mountedRef.current = false;
+    //         }
+    //     });
+    //     return mountedRef;
+    // }
+
+
+    如何自定义hooks ？
+    自定义hooks,内部状态每次改变都会引起使用该hook的组件重新渲染;
+
+    使用hooks(包括自定义hooks的两条规则): 
+        1只能在函数组件和自定义hooks中使用,不能在普通函数中使用;
+        2只能在顶层代码中使用,不能在if条件判断,循环中使用;
+
+    补充: 使用react hooks对代码进行规范监测可以安装 eslint-plugin-react-hooks
+
+
+    react hooks严重依赖调用顺序,不能用在if,循环中, 在render和re-render时调用顺序一定要保持一致;
+
+
+    class 组件逻辑复用有哪些问题 ?
+        HOC 组件层级嵌套过多，不易调试; HOC会劫持props，必须严格规范；
+        render prop 只能传递纯函数，也比较难理解；
+    Hooks 逻辑复用有哪些好处 ?
+        直接自定义hooks, 不需要像class组件复用逻辑一样, 刻意去做抽离出逻辑, 易理解记忆;
+        也不会产生组件嵌套;
+       
+    使用react hooks遇到哪些坑 ?
+       1/useState初始化值,re-render时也只是恢复初始化值,不会重新设置值
+       2/useEffect(()=>{}, []) 
+       依赖为[]时,re-render不会重新执行effect函数,内部()=>{}函数内的state拿不到更新后的state值,拿到的永远是初始化时的值; 解决方案：可以使用 useRef(0)定义初始值,effect函数内部使用；
+       没有依赖时,re-render会去执行effect函数，内部()=>{}函数内的state一直是最新值;
+       3/useEffect(()=>{},[]); 依赖内有对象等引用类型数据会触发死循环,因为对依赖的比较使用的是Object.is(),false就会触发重新执行; 解决方案: 可以把依赖打散传入 基础数据类型
+     

@@ -105,7 +105,7 @@ function combineReducer(reducers) {
   reducerKeys.forEach((key) => {
       if(typeof reducers[key] === 'function') {
       finalReducers[key] = reducers[key]
-      } 
+      }
   })
   const finalReducersKeys = Object.keys(finalReducers) // {home, category}
     // 第二步比较重要 就是将所有reducer合在一起

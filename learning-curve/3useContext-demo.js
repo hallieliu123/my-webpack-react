@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState,useEffect,useContext } from 'react'; 
+import { useState,useEffect,useContext } from 'react';
 
 const context = React.createContext();
 const Provider = context.Provider;
@@ -21,7 +21,7 @@ function AddFruit(){
     let { fruits,setFruits } = useContext(context);
     const addFunc = (event) => {
         if(name && event.keyCode =='13'){
-            setFruits([...fruits,name])
+            setFruits([...fruits,name]);
             setName('');
         }
     }

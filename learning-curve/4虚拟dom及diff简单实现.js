@@ -60,8 +60,8 @@ function createTextVnode(text){
 // 创建 dom
 function render(vnode,container){ 
     if( container.vnode ){
-        patch(container.vnode,vnode,container);
-    }else{
+        patch(container.vnode,vnode,container); // 分为两个阶段: reconciliation 阶段 - 执行diff算法,纯js计算; commit阶段 - 将diff结果渲染到dom
+    }else{                                  
         mount(vnode,container);
     }
     container.vnode = vnode; // 挂载在container上来识别是否渲染过

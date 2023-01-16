@@ -46,8 +46,8 @@ export const connect = (mapStateToProps,mapDispatchToProps) => (wrappedComponent
     }
     update(){
         const store = this.context.store;
-        const stateProps = mapStateToProps(store.getState);
-        const dipatchProps = bindActionCreators(mapDispatchToProps, store.dipatch);
+        const stateProps = mapStateToProps(store.getState());
+        const dipatchProps = bindActionCreators(mapDispatchToProps, store.dispatch);
         this.setState({
             ...this.state,
             ...stateProps,
@@ -59,7 +59,7 @@ export const connect = (mapStateToProps,mapDispatchToProps) => (wrappedComponent
     }
 }
 
-export function bindActionCreator(creator,dipatch){
+export function bindActionCreator(creator,dispatch){
     return (...args) => dispatch(creator(...args)); // function(..arg)=>dispatch({type: 'TYPE_TEST'});
 }
 /**
@@ -68,12 +68,9 @@ export function bindActionCreator(creator,dipatch){
  *  logout: ()=>({type: ''})
  * }
  */
-export function bindActionCreators(creators, dipatch){
+export function bindActionCreators(creators, dispatch){
     return Object.keys(creators).reduce((prev,cur)=>{ // [login, logout]
-        prev[key] = bindActionCreator(creators[cur], dipatch)
+        prev[key] = bindActionCreator(creators[cur], dispatch)
         return prev;
     },{});
 }
-
-
-

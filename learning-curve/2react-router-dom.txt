@@ -43,23 +43,13 @@ react-router-dom
    
    路由事件对象在 Route element={<组件/>} 内部,可以通过 props获取,包括 match(里面有params: props.match.params.id 获取id, /abc/:id), 
    location, history( history.goBack())
-   现在hooks是用 hooks获取了如： const { id } = useParams();
+   现在hooks是用 hooks获取了如： const params = useParams();
+                              // params.id
                               const [searchParams, setSearcParam] = useSearchParams();
                               searchParams.get('name'); // ?name=amy&age=18
                               setSearcParam 用来改变
 
    未登录用户怎样实现跳转
-
-
-
-
-
-
-
-
-
-
-
 
 
 

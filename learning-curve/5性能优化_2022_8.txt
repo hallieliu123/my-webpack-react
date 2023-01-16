@@ -29,7 +29,7 @@
             const timing = performance.getEntriesByType('navigation')[0]; // 很多资源加载的信息都保存在navigation里
             const timeToInteractive = timing.domInteractive - timing.fetchStart;
             console.log('用户可以交互时间',timeToInteractive);
-       }); 
+       });
        比如说 同过PerformaceObserver监听获取所有 long tasks 对象
        const observer = new PerformaceObserver(list=>{
          for(let entry of list.getEntries()) {
@@ -74,9 +74,9 @@
                     异步http请求线程: 每发送一个http请求就会开启一个此线程,当检测到状态变更时,将对应回调函数放入任务队列,等待js引擎线程执行;
                     定时触发器线程: 负责如setInterval,setTimeout等的计时,计时完毕将对应回调放入任务队列,等待js引擎线程执行;
     进程之间的通信: 1首先browser主进程收到用户请求,开始获取页面内容下载网络资源,然后将任务通过renderhost接口传递给renderer渲染进程;
-                  2渲染进程收到信息后开始渲染,同时可能需要browser主进程去加载资源和GPU线程进行辅助渲染,最后得到renderObject树
+                  2渲染进程收到信息后开始渲染,同时可能需要browser主进程去加载资源和GPU进程进行辅助渲染,最后得到renderObject树
                   3渲染进程将结果传给browser主进程,主进程负责绘制
-    浏览器渲染原理: GUI渲染线程 
+    浏览器渲染原理: GUI渲染线程
                  1解析 html 生成 dom 对象,解析 style 生成 cssom对象
                  2构成render tree
                  3然后根据各元素大小位置进行布局layout,布局是关注的元素的几何信息
